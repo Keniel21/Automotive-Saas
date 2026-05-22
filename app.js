@@ -4,13 +4,13 @@
 
 // --------------------------------------------------------------------------
 // A. CREDENCIAIS DO SUPABASE (BANCO POSTGRESQL NUVEM)
-// Insira as chaves do seu projeto Supabase gratuito aqui para ligar o SaaS!
 // --------------------------------------------------------------------------
 const SUPABASE_URL = "https://xjmyijeblktwncpivywh.supabase.co"; 
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqbXlpamVibGt0d25jcGl2eXdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NTkxMzAsImV4cCI6MjA5NTAzNTEzMH0.AAn5z138QpB1VbcoZjDNMTflmcy97IIvhxK_b1de-eQ";
 
 // Estado da Conexão com a Nuvem
-let supabase = null;
+// CORREÇÃO: renomeado de 'supabase' para 'supabaseClient' para evitar conflito com o SDK global window.supabase
+let supabaseClient = null;
 let isCloudActive = false;
 let sessionUser = null;
 
@@ -99,24 +99,20 @@ let leadViewMode = 'kanban';
 document.addEventListener("DOMContentLoaded", async () => {
     setupHeaderDate();
     
-    // Verifica se chaves reais foram fornecidas
     if (SUPABASE_URL !== "SUA_SUPABASE_URL_AQUI" && SUPABASE_ANON_KEY !== "SUA_SUPABASE_KEY_AQUI") {
         try {
-            // Inicializa SDK do Supabase
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            // CORREÇÃO: usa window.supabase.createClient e armazena em supabaseClient
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             isCloudActive = true;
             
-            // Oculta aviso do modo de demonstração
             document.getElementById("login-demo-notice").style.display = "none";
             
-            // Verifica se existe sessão ativa
             await checkActiveSession();
         } catch (e) {
             console.error("Erro ao inicializar Supabase: ", e);
             switchToDemoMode();
         }
     } else {
-        // Roda em modo de demonstração local
         switchToDemoMode();
     }
     
@@ -130,12 +126,10 @@ function setupHeaderDate() {
     if (display) display.innerText = d.toLocaleDateString('pt-BR', options);
 }
 
-// Entrar de forma Offline (Demo)
 function switchToDemoMode() {
     isCloudActive = false;
     console.log("AutoDrive CRM rodando em MODO DEMO (Sem Banco Cloud)");
     
-    // Carrega dados se existirem no LocalStorage para dar sensação real de persistência
     if (localStorage.getItem("autodrive_estoque")) {
         estoque = JSON.parse(localStorage.getItem("autodrive_estoque"));
         leads = JSON.parse(localStorage.getItem("autodrive_leads"));
@@ -144,19 +138,16 @@ function switchToDemoMode() {
         agenda = JSON.parse(localStorage.getItem("autodrive_agenda"));
     }
     
-    // Ajusta rodapé da barra lateral
     document.getElementById("footer-username").innerText = "Marcelo (Demo)";
     document.getElementById("footer-avatar").innerText = "DM";
 }
 
-// Pula a tela de login ao clicar no botão "Entrar no Modo Demo"
 function bypassLoginForDemo() {
     document.getElementById("login-overlay").classList.remove("active");
     updateApplicationState();
     initCharts();
 }
 
-// Persiste dados no LocalStorage se estiver em Modo Demo
 function persistLocalData() {
     if (!isCloudActive) {
         localStorage.setItem("autodrive_estoque", JSON.stringify(estoque));
@@ -168,28 +159,26 @@ function persistLocalData() {
 }
 
 // --------------------------------------------------------------------------
-// D. INTEGRACÃO COM SUPABASE AUTH & DATABASE
+// D. INTEGRAÇÃO COM SUPABASE AUTH & DATABASE
 // --------------------------------------------------------------------------
 
-// Verifica se o usuário já está logado
 async function checkActiveSession() {
-    const { data, error } = await supabase.auth.getSession();
+    const { data, error } = await supabaseClient.auth.getSession();
     if (data.session) {
         sessionUser = data.session.user;
         document.getElementById("login-overlay").classList.remove("active");
         
-        // Define usuário no painel lateral
         document.getElementById("footer-username").innerText = sessionUser.email.split("@")[0].toUpperCase();
         document.getElementById("footer-avatar").innerText = sessionUser.email.substring(0,2).toUpperCase();
         
-        // Puxa tabelas e inicia
         await fetchCloudData();
+        updateApplicationState();
+        initCharts();
     } else {
         document.getElementById("login-overlay").classList.add("active");
     }
 }
 
-// Ação de Login (Cloud Mode)
 async function handleLogin(event) {
     event.preventDefault();
     const email = document.getElementById("login-email").value;
@@ -199,7 +188,7 @@ async function handleLogin(event) {
     errorDiv.style.display = "none";
 
     if (isCloudActive) {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
         if (error) {
             errorDiv.innerText = `Erro de Autenticação: ${error.message}`;
             errorDiv.style.display = "block";
@@ -207,7 +196,6 @@ async function handleLogin(event) {
             sessionUser = data.user;
             document.getElementById("login-overlay").classList.remove("active");
             
-            // Define usuário
             document.getElementById("footer-username").innerText = sessionUser.email.split("@")[0].toUpperCase();
             document.getElementById("footer-avatar").innerText = sessionUser.email.substring(0,2).toUpperCase();
             
@@ -216,60 +204,50 @@ async function handleLogin(event) {
             initCharts();
         }
     } else {
-        // Se de alguma forma submeter o formulário em modo offline
         bypassLoginForDemo();
     }
 }
 
-// Ação de Logout
 async function handleLogout() {
     if (isCloudActive) {
-        await supabase.auth.signOut();
+        await supabaseClient.auth.signOut();
         sessionUser = null;
         document.getElementById("login-overlay").classList.add("active");
         document.getElementById("form-login").reset();
     } else {
-        // No modo demo, apenas recarrega para simular bloqueio
         window.location.reload();
     }
 }
 
-// Puxa todos os dados das tabelas PostgreSQL do Supabase
 async function fetchCloudData() {
     if (!isCloudActive) return;
 
     try {
-        // 1. Estoque
-        const { data: est, error: errEst } = await supabase.from('estoque').select('*').order('id', { ascending: false });
+        const { data: est, error: errEst } = await supabaseClient.from('estoque').select('*').order('id', { ascending: false });
         if (!errEst) estoque = est.map(c => ({
             id: c.id, model: c.model, year: c.year, km: c.km, buyPrice: parseFloat(c.buy_price), sellPrice: parseFloat(c.sell_price), daysInStock: c.days_in_stock, status: c.status, type: c.type
         }));
 
-        // 2. Vendas
-        const { data: ven, error: errVen } = await supabase.from('vendas').select('*').order('date', { ascending: false });
+        const { data: ven, error: errVen } = await supabaseClient.from('vendas').select('*').order('date', { ascending: false });
         if (!errVen) vendas = ven.map(v => ({
             id: v.id, carId: v.car_id, client: v.client, sellPrice: parseFloat(v.sell_price), date: v.date, profit: parseFloat(v.profit), margin: parseFloat(v.margin), type: v.type
         }));
 
-        // 3. Despesas
-        const { data: des, error: errDes } = await supabase.from('despesas').select('*').order('date', { ascending: false });
+        const { data: des, error: errDes } = await supabaseClient.from('despesas').select('*').order('date', { ascending: false });
         if (!errDes) despesas = des.map(d => ({
             id: d.id, desc: d.description, carId: d.car_id, date: d.date, val: parseFloat(d.val), category: d.category
         }));
 
-        // 4. Agenda
-        const { data: age, error: errAge } = await supabase.from('agenda').select('*').order('date', { ascending: true });
+        const { data: age, error: errAge } = await supabaseClient.from('agenda').select('*').order('date', { ascending: true });
         if (!errAge) agenda = age.map(a => ({
             id: a.id, title: a.title, date: a.date, time: a.time, carId: a.car_id, category: a.category, desc: a.description
         }));
 
-        // 5. Leads & suas Interações (Pipeline de Negócios)
-        const { data: lds, error: errLds } = await supabase.from('leads').select('*').order('id', { ascending: false });
+        const { data: lds, error: errLds } = await supabaseClient.from('leads').select('*').order('id', { ascending: false });
         if (!errLds) {
             leads = [];
             for (let l of lds) {
-                // Puxa as interações de cada lead
-                const { data: ints } = await supabase.from('interactions').select('date, text').eq('lead_id', l.id).order('id', { ascending: true });
+                const { data: ints } = await supabaseClient.from('interactions').select('date, text').eq('lead_id', l.id).order('id', { ascending: true });
                 leads.push({
                     id: l.id, name: l.name, phone: l.phone, interestCarId: l.interest_car_id, origin: l.origin, status: l.status, lastContactDays: l.last_contact_days, nextAction: l.next_action,
                     interactions: ints || []
@@ -627,9 +605,8 @@ async function dropLead(event, newStatus) {
     if (lead && lead.status !== newStatus) {
         if (isCloudActive) {
             try {
-                // Atualiza na Nuvem (Supabase)
-                await supabase.from('leads').update({ status: newStatus, last_contact_days: 0 }).eq('id', id);
-                await supabase.from('interactions').insert({
+                await supabaseClient.from('leads').update({ status: newStatus, last_contact_days: 0 }).eq('id', id);
+                await supabaseClient.from('interactions').insert({
                     lead_id: id,
                     date: 'Hoje',
                     text: `Lead movido manualmente para a fase: ${newStatus.toUpperCase()}`
@@ -639,7 +616,6 @@ async function dropLead(event, newStatus) {
                 console.error("Falha ao mover lead na nuvem: ", e);
             }
         } else {
-            // Modo Demo
             lead.status = newStatus;
             lead.lastContactDays = 0;
             lead.interactions.push({ date: "Hoje", text: `Lead movido manualmente para a fase: ${newStatus.toUpperCase()}` });
@@ -904,14 +880,12 @@ async function saveNewLead(event) {
 
     if (isCloudActive) {
         try {
-            // Insere lead e pega o ID gerado
-            const { data, error } = await supabase.from('leads').insert({
+            const { data, error } = await supabaseClient.from('leads').insert({
                 name, phone, interest_car_id: interestCarId, origin, status, last_contact_days: 0, next_action: "Mapear primeira proposta"
             }).select();
 
             if (!error && data && data.length > 0) {
-                // Insere primeira interação na timeline
-                await supabase.from('interactions').insert({
+                await supabaseClient.from('interactions').insert({
                     lead_id: data[0].id,
                     date: 'Hoje',
                     text: 'Lead criado no sistema. Prontamente na fase inicial.'
@@ -922,7 +896,6 @@ async function saveNewLead(event) {
             console.error("Falha ao salvar lead na nuvem: ", e);
         }
     } else {
-        // Modo Demo Local
         const newLead = {
             id: leads.length + 1, name, phone, interestCarId, origin, status, lastContactDays: 0, nextAction: "Mapear primeira proposta",
             interactions: [{ date: "Hoje", text: "Lead criado no sistema. Prontamente na fase inicial." }]
@@ -957,7 +930,7 @@ async function saveNewCar(event) {
 
     if (isCloudActive) {
         try {
-            await supabase.from('estoque').insert({
+            await supabaseClient.from('estoque').insert({
                 model, year, km, buy_price: buyPrice, sell_price: sellPrice, type, status, days_in_stock: daysInStock
             });
             await fetchCloudData();
@@ -965,7 +938,6 @@ async function saveNewCar(event) {
             console.error("Falha ao salvar veículo na nuvem: ", e);
         }
     } else {
-        // Modo Demo
         const newCar = { id: estoque.length + 1, model, year, km, buyPrice, sellPrice, daysInStock, status, type };
         estoque.unshift(newCar);
         persistLocalData();
@@ -1019,22 +991,19 @@ async function addLeadInteraction(event) {
     if (lead) {
         if (isCloudActive) {
             try {
-                // Adiciona a interação
-                await supabase.from('interactions').insert({ lead_id: activeTimelineLeadId, date: 'Hoje', text });
+                await supabaseClient.from('interactions').insert({ lead_id: activeTimelineLeadId, date: 'Hoje', text });
                 
-                // Monta o payload de atualização do lead
                 const updatePayload = { next_action: nextAction, last_contact_days: 0 };
                 if (newStatus !== 'no-change') {
                     updatePayload.status = newStatus;
                 }
-                await supabase.from('leads').update(updatePayload).eq('id', activeTimelineLeadId);
+                await supabaseClient.from('leads').update(updatePayload).eq('id', activeTimelineLeadId);
                 
                 await fetchCloudData();
             } catch (e) {
                 console.error("Falha ao salvar interação na nuvem: ", e);
             }
         } else {
-            // Modo Demo
             lead.interactions.push({ date: "Hoje", text });
             lead.nextAction = nextAction;
             lead.lastContactDays = 0;
@@ -1079,26 +1048,22 @@ async function saveSale(event) {
 
     const car = estoque.find(c => c.id === carId);
     if (car) {
-        // Lucro real = Preço de Venda - Preço de Compra - Despesas desse carro
         const despesasCarro = despesas.filter(d => d.carId === carId).reduce((sum, d) => sum + d.val, 0);
         const profit = sellPrice - car.buyPrice - despesasCarro;
         const margin = sellPrice > 0 ? (profit / sellPrice) * 100 : 0;
 
         if (isCloudActive) {
             try {
-                // Atualiza o carro no banco
-                await supabase.from('estoque').update({ status: 'vendido', sell_price: sellPrice }).eq('id', carId);
+                await supabaseClient.from('estoque').update({ status: 'vendido', sell_price: sellPrice }).eq('id', carId);
                 
-                // Insere venda no banco
-                await supabase.from('vendas').insert({
+                await supabaseClient.from('vendas').insert({
                     car_id: carId, client, sell_price: sellPrice, date, profit, margin, type
                 });
 
-                // Tenta fechar o lead desse carro se existir
                 const lead = leads.find(l => l.interestCarId === carId && l.status !== 'fechado');
                 if (lead) {
-                    await supabase.from('leads').update({ status: 'fechado' }).eq('id', lead.id);
-                    await supabase.from('interactions').insert({
+                    await supabaseClient.from('leads').update({ status: 'fechado' }).eq('id', lead.id);
+                    await supabaseClient.from('interactions').insert({
                         lead_id: lead.id, date: 'Hoje', text: `Venda formalizada! Valor de R$ ${sellPrice.toLocaleString('pt-BR')}`
                     });
                 }
@@ -1108,7 +1073,6 @@ async function saveSale(event) {
                 console.error("Erro ao registrar venda na nuvem: ", e);
             }
         } else {
-            // Modo Demo
             car.status = 'vendido';
             car.sellPrice = sellPrice;
 
@@ -1150,7 +1114,7 @@ async function saveNewDespesa(event) {
 
     if (isCloudActive) {
         try {
-            await supabase.from('despesas').insert({
+            await supabaseClient.from('despesas').insert({
                 description: desc, car_id: carId, date, val, category
             });
             await fetchCloudData();
@@ -1158,7 +1122,6 @@ async function saveNewDespesa(event) {
             console.error("Falha ao salvar despesa na nuvem: ", e);
         }
     } else {
-        // Modo Demo
         const newDespesa = { id: despesas.length + 1, desc, carId, date, val, category };
         despesas.push(newDespesa);
         persistLocalData();
@@ -1190,7 +1153,7 @@ async function saveNewAgenda(event) {
 
     if (isCloudActive) {
         try {
-            await supabase.from('agenda').insert({
+            await supabaseClient.from('agenda').insert({
                 title, date, time, car_id: carId, category, description: desc
             });
             await fetchCloudData();
@@ -1198,7 +1161,6 @@ async function saveNewAgenda(event) {
             console.error("Falha ao agendar compromisso na nuvem: ", e);
         }
     } else {
-        // Modo Demo
         const newEvt = { id: agenda.length + 1, title, date, time, carId, category, desc };
         agenda.push(newEvt);
         persistLocalData();
