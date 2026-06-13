@@ -1,0 +1,10 @@
+# Arquivos compactados
+*.zip
+
+# Pastas de sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Node
+node_modules/

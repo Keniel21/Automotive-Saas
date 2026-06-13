@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoDrive CRM - Gestão Automotiva Premium</title>
+    <!-- CSS Principal -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Chart.js para gráficos SaaS/PowerBI -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons para vetores de alta qualidade -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Supabase Client SDK (PostgreSQL Nuvem) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+    <!-- BARRA LATERAL FIXA DE NAVEGAÇÃO -->
+    <aside class="sidebar">
+        <button class="collapse-btn" id="sidebar-toggle-btn" onclick="toggleSidebar()" title="Recolher menu">
+            <i data-lucide="chevron-left"></i>
+        </button>
+        <div class="sidebar-logo">
+            <div class="logo-icon">
+                <i data-lucide="car"></i>
+            </div>
+            <div class="logo-text">
+                <h1>AutoDrive</h1>
+                <span>CRM & Estoque</span>
+            </div>
+        </div>
+
+        <ul class="sidebar-menu">
+            <span class="menu-category">Navegação</span>
+            <li class="menu-item active" data-tab="dashboard">
+                <a onclick="switchTab('dashboard')">
+                    <i data-lucide="layout-dashboard"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="menu-item" data-tab="estoque">
+                <a onclick="switchTab('estoque')">
+                    <i data-lucide="package"></i>
+                    <span>Estoque</span>
+                    <span class="menu-badge red" id="badge-estoque-alert">0</span>
+                </a>
+            </li>
+            <li class="menu-item" data-tab="leads">
+                <a onclick="switchTab('leads')">
+                    <i data-lucide="users"></i>
+                    <span>Leads / CRM</span>
+                    <span class="menu-badge blue" id="badge-leads-active">0</span>
+                </a>
+            </li>
+            <li class="menu-item" data-tab="vendas">
+                <a onclick="switchTab('vendas')">
+                    <i data-lucide="banknote"></i>
+                    <span>Vendas</span>
+                </a>
+            </li>
+
+            <span class="menu-category">Financeiro & Agenda</span>
+            <li class="menu-item" data-tab="financeiro">
+                <a onclick="switchTab('financeiro')">
+                    <i data-lucide="wallet"></i>
+                    <span>Financeiro</span>
+                </a>
+            </li>
+            <li class="menu-item" data-tab="agenda">
+                <a onclick="switchTab('agenda')">
+                    <i data-lucide="calendar"></i>
+                    <span>Agenda</span>
+                </a>
+            </li>
+
+            <span class="menu-category">Suporte Técnico</span>
+            <li class="menu-item" data-tab="excel">
+                <a onclick="switchTab('excel')" style="color: var(--green-profit);">
+                    <i data-lucide="file-spreadsheet"></i>
+                    <span>Guia de Excel</span>
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-footer">
+            <div class="user-avatar" id="footer-avatar">AD</div>
+            <div class="user-info">
+                <h4 id="footer-username">Marcelo Motors</h4>
+                <p>Operador Único</p>
+            </div>
+            <i data-lucide="log-out" onclick="handleLogout()" style="cursor:pointer; color:var(--red-alert); margin-left:auto; transition: var(--transition-fast)" title="Sair do Sistema"></i>
+        </div>
+    </aside>
+
+    <!-- CONTEÚDO DA APLICAÇÃO -->
+    <main class="main-content">
+        <!-- HEADER SUPERIOR ESTILO SAAS -->
+        <header class="top-header">
+            <button class="mobile-menu-btn" id="mobile-menu-btn" onclick="toggleSidebar()" title="Menu de Navegação">
+                <i data-lucide="menu"></i>
+            </button>
+            <div class="header-title-area">
+                <h2 id="current-tab-title">Dashboard Operacional</h2>
+                <p id="current-tab-subtitle">Visão unificada das vendas, estoque e lucratividade</p>
+            </div>
+            <div class="header-actions">
+                <div class="current-date">
+                    <i data-lucide="calendar-days"></i>
+                    <span id="date-display">Carregando...</span>
+                </div>
+                <button class="btn btn-primary" onclick="openAddLeadModal()">
+                    <i data-lucide="plus"></i>
+                    <span>Novo Lead</span>
+                </button>
+                <button class="btn btn-success" onclick="openAddCarModal()">
+                    <i data-lucide="plus"></i>
+                    <span>Cadastrar Carro</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- ==========================================
+             ABA 1: HOME / DASHBOARD
+             ========================================== -->
+        <section id="dashboard-tab" class="tab-pane active">
+            <!-- Grid de KPIs -->
+            <div class="dashboard-grid">
+                <div class="kpi-card blue">
+                    <div class="kpi-header">
+                        <span class="kpi-title">Veículos em Estoque</span>
+                        <div class="kpi-icon"><i data-lucide="package"></i></div>
+                    </div>
+                    <div class="kpi-value" id="kpi-estoque">0</div>
+                    <div class="kpi-footer">
+                        <span class="kpi-trend positive"><i data-lucide="arrow-up-right"></i> +2 este mês</span>
+                        <span style="color: var(--text-muted);">Capacidade ótima</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card green">
+                    <div class="kpi-header">
+                        <span class="kpi-title">Lucro Líquido (Mês)</span>
+                        <div class="kpi-icon"><i data-lucide="trending-up"></i></div>
+                    </div>
+                    <div class="kpi-value" id="kpi-lucro">R$ 0,00</div>
+                    <div class="kpi-footer">
+                        <span class="kpi-trend positive"><i data-lucide="arrow-up-right"></i> +12%</span>
+                        <span style="color: var(--text-muted);">vs. mês anterior</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card blue">
+                    <div class="kpi-header">
+                        <span class="kpi-title">Vendas do Mês</span>
+                        <div class="kpi-icon"><i data-lucide="badge-dollar-sign"></i></div>
+                    </div>
+                    <div class="kpi-value" id="kpi-vendas">0</div>
+                    <div class="kpi-footer">
+                        <span class="kpi-trend positive"><i data-lucide="check"></i> Meta batida</span>
+                        <span style="color: var(--text-muted);">60% convencional</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card yellow">
+                    <div class="kpi-header">
+                        <span class="kpi-title">Leads Ativos</span>
+                        <div class="kpi-icon"><i data-lucide="users"></i></div>
+                    </div>
+                    <div class="kpi-value" id="kpi-leads">0</div>
+                    <div class="kpi-footer">
+                        <span class="kpi-trend neutral"><i data-lucide="minus"></i> Estável</span>
+                        <span style="color: var(--text-muted);">Negociações quentes</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card red">
+                    <div class="kpi-header">
+                        <span class="kpi-title">Estoque Parado (+30d)</span>
+                        <div class="kpi-icon"><i data-lucide="alert-triangle"></i></div>
+                    </div>
+                    <div class="kpi-value" id="kpi-parados" style="color: var(--red-alert);">0</div>
+                    <div class="kpi-footer">
+                        <span class="kpi-trend negative" style="background-color: rgba(239, 68, 68, 0.2);"><i data-lucide="clock"></i> Crítico</span>
+                        <span style="color: var(--text-muted);">Exige repasse/desconto</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card blue">
+                    <div class="kpi-header">
+                        <span class="kpi-title">Ticket Médio</span>
+                        <div class="kpi-icon"><i data-lucide="bar-chart-3"></i></div>
+                    </div>
+                    <div class="kpi-value" id="kpi-ticket">R$ 0</div>
+                    <div class="kpi-footer">
+                        <span class="kpi-trend positive"><i data-lucide="arrow-up-right"></i> Alto padrão</span>
+                        <span style="color: var(--text-muted);">Perfil semi-novos</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráficos e Resumos -->
+            <div class="charts-grid">
+                <div class="dashboard-panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <h3>Vendas e Lucro Acumulado</h3>
+                            <p>Análise de lucros reais sobre vendas consolidadas</p>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart-sales-profit"></canvas>
+                    </div>
+                </div>
+
+                <div class="dashboard-panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <h3>Origem dos Leads</h3>
+                            <p>Principais canais de aquisição de clientes</p>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart-leads-origin"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resumo e Atalhos -->
+            <div class="charts-grid" style="grid-template-columns: 1fr 1fr;">
+                <div class="dashboard-panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <h3>Visão do Giro de Estoque</h3>
+                            <p>Comparativo de tempo parado médio por categoria de preço</p>
+                        </div>
+                    </div>
+                    <div class="chart-container" style="height: 180px;">
+                        <canvas id="chart-giro-estoque"></canvas>
+                    </div>
+                </div>
+
+                <div class="dashboard-panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <h3>Acesso Rápido</h3>
+                            <p>Operações do dia a dia a um clique de distância</p>
+                        </div>
+                    </div>
+                    <div class="shortcuts-grid">
+                        <div class="shortcut-btn" onclick="openAddCarModal()">
+                            <div class="shortcut-icon"><i data-lucide="car"></i></div>
+                            <div class="shortcut-text">
+                                <h4>Cadastrar Veículo</h4>
+                                <p>Inserir novo carro no estoque</p>
+                            </div>
+                        </div>
+                        <div class="shortcut-btn" onclick="openAddLeadModal()">
+                            <div class="shortcut-icon" style="color: var(--blue-primary);"><i data-lucide="user-plus"></i></div>
+                            <div class="shortcut-text">
+                                <h4>Cadastrar Lead</h4>
+                                <p>Capturar nova intenção</p>
+                            </div>
+                        </div>
+                        <div class="shortcut-btn" onclick="switchTab('leads')">
+                            <div class="shortcut-icon" style="color: var(--yellow-warning);"><i data-lucide="kanban"></i></div>
+                            <div class="shortcut-text">
+                                <h4>Ver Quadro CRM</h4>
+                                <p>Mapear funil de vendas</p>
+                            </div>
+                        </div>
+                        <div class="shortcut-btn" onclick="switchTab('excel')">
+                            <div class="shortcut-icon" style="color: var(--green-profit);"><i data-lucide="file-spreadsheet"></i></div>
+                            <div class="shortcut-text">
+                                <h4>Guia Excel</h4>
+                                <p>Replicar esse visual na planilha</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             ABA 2: ESTOQUE (PRODUTO E TABELAS)
+             ========================================== -->
+        <section id="estoque-tab" class="tab-pane">
+            <div class="table-controls">
+                <div class="search-wrapper">
+                    <i data-lucide="search"></i>
+                    <input type="text" class="search-input" id="search-estoque" placeholder="Buscar por modelo, placa, cor, chassi..." oninput="filterEstoqueTable()">
+                </div>
+                <div style="display:flex; gap:12px; align-items:center;">
+                    <div class="filter-group" id="filter-estoque-group">
+                        <button class="filter-btn active" onclick="filterEstoqueStatus('todos')">Todos</button>
+                        <button class="filter-btn" onclick="filterEstoqueStatus('disponivel')">Disponíveis</button>
+                        <button class="filter-btn" onclick="filterEstoqueStatus('preparacao')">Preparação</button>
+                        <button class="filter-btn" onclick="filterEstoqueStatus('reservado')">Reservados</button>
+                        <button class="filter-btn" onclick="filterEstoqueStatus('vendido')">Vendidos</button>
+                    </div>
+                    <button class="btn btn-secondary btn-export-excel" onclick="exportEstoqueToExcel()" title="Exportar estoque para planilha Excel (CSV)">
+                        <i data-lucide="file-spreadsheet"></i> Exportar
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="saas-table" id="estoque-table">
+                    <thead>
+                        <tr>
+                            <th>Veículo</th>
+                            <th>Ano</th>
+                            <th>KM</th>
+                            <th>Valor Compra</th>
+                            <th>Valor Venda</th>
+                            <th>Margem / Lucro Est.</th>
+                            <th>Dias em Estoque</th>
+                            <th>Tipo de Venda</th>
+                            <th>Status</th>
+                            <th style="text-align: center;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="estoque-table-body">
+                        <!-- Gerado Dinamicamente por app.js -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             ABA 3: LEADS / CRM (QUADRO KANBAN)
+             ========================================== -->
+        <section id="leads-tab" class="tab-pane">
+            <div class="crm-controls">
+                <div class="search-wrapper" style="max-width: 320px;">
+                    <i data-lucide="search"></i>
+                    <input type="text" class="search-input" id="search-leads" placeholder="Buscar lead..." oninput="filterKanban()">
+                </div>
+                <div style="display:flex; gap:12px; align-items:center;">
+                    <div class="view-toggle">
+                        <button class="view-toggle-btn active" id="toggle-kanban" onclick="setLeadView('kanban')">
+                            <i data-lucide="kanban"></i> Quadro Kanban
+                        </button>
+                        <button class="view-toggle-btn" id="toggle-lista" onclick="setLeadView('lista')">
+                            <i data-lucide="list"></i> Tabela Simples
+                        </button>
+                    </div>
+                    <button class="btn btn-secondary btn-export-excel" onclick="exportLeadsToExcel()" title="Exportar leads para planilha Excel">
+                        <i data-lucide="file-spreadsheet"></i> Exportar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Visualização 1: Kanban -->
+            <div id="leads-kanban-view" class="kanban-board">
+                <!-- Coluna 1: Novo Lead -->
+                <div class="kanban-column" data-status="novo lead">
+                    <div class="kanban-header">
+                        <span class="kanban-title"><span class="kanban-dot dot-novo"></span>Novo Lead</span>
+                        <span class="kanban-count" id="count-novo">0</span>
+                    </div>
+                    <div class="kanban-cards" id="cards-novo" ondragover="allowDrop(event)" ondrop="dropLead(event, 'novo lead')"></div>
+                </div>
+
+                <!-- Coluna 2: Contato Realizado -->
+                <div class="kanban-column" data-status="contato realizado">
+                    <div class="kanban-header">
+                        <span class="kanban-title"><span class="kanban-dot dot-contato"></span>Contato</span>
+                        <span class="kanban-count" id="count-contato">0</span>
+                    </div>
+                    <div class="kanban-cards" id="cards-contato" ondragover="allowDrop(event)" ondrop="dropLead(event, 'contato realizado')"></div>
+                </div>
+
+                <!-- Coluna 3: Negociação -->
+                <div class="kanban-column" data-status="negociação">
+                    <div class="kanban-header">
+                        <span class="kanban-title"><span class="kanban-dot dot-negociacao"></span>Negociação</span>
+                        <span class="kanban-count" id="count-negociacao">0</span>
+                    </div>
+                    <div class="kanban-cards" id="cards-negociacao" ondragover="allowDrop(event)" ondrop="dropLead(event, 'negociação')"></div>
+                </div>
+
+                <!-- Coluna 4: Sem Resposta -->
+                <div class="kanban-column" data-status="sem resposta">
+                    <div class="kanban-header">
+                        <span class="kanban-title"><span class="kanban-dot dot-sem-resposta"></span>Sem Resposta</span>
+                        <span class="kanban-count" id="count-sem-resposta">0</span>
+                    </div>
+                    <div class="kanban-cards" id="cards-sem-resposta" ondragover="allowDrop(event)" ondrop="dropLead(event, 'sem resposta')"></div>
+                </div>
+
+                <!-- Coluna 5: Fechado (Ganho) -->
+                <div class="kanban-column" data-status="fechado">
+                    <div class="kanban-header">
+                        <span class="kanban-title"><span class="kanban-dot dot-fechado"></span>Fechado (Ganho)</span>
+                        <span class="kanban-count" id="count-fechado">0</span>
+                    </div>
+                    <div class="kanban-cards" id="cards-fechado" ondragover="allowDrop(event)" ondrop="dropLead(event, 'fechado')"></div>
+                </div>
+
+                <!-- Coluna 6: Perdido -->
+                <div class="kanban-column" data-status="perdido">
+                    <div class="kanban-header">
+                        <span class="kanban-title"><span class="kanban-dot dot-perdido"></span>Perdido / Sem interesse</span>
+                        <span class="kanban-count" id="count-perdido">0</span>
+                    </div>
+                    <div class="kanban-cards" id="cards-perdido" ondragover="allowDrop(event)" ondrop="dropLead(event, 'perdido')"></div>
+                </div>
+            </div>
+
+            <!-- Visualização 2: Tabela de Leads -->
+            <div id="leads-list-view" class="table-responsive" style="display: none;">
+                <table class="saas-table">
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th>Telefone</th>
+                            <th>Veículo de Interesse</th>
+                            <th>Origem</th>
+                            <th>Status</th>
+                            <th>Último Contato</th>
+                            <th>Próxima Ação</th>
+                            <th style="text-align: center;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leads-list-body">
+                        <!-- Preenchido via app.js -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             ABA 4: VENDAS (HISTÓRICO)
+             ========================================== -->
+        <section id="vendas-tab" class="tab-pane">
+            <div class="dashboard-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 24px;">
+                <div class="kpi-card green">
+                    <div class="kpi-header">
+                        <span class="kpi-title">Faturamento Total</span>
+                        <div class="kpi-icon"><i data-lucide="badge-dollar-sign"></i></div>
+                    </div>
+                    <div class="kpi-value" id="sales-kpi-faturamento">R$ 0,00</div>
+                </div>
+                <div class="kpi-card green">
+                    <div class="kpi-header">
+                        <span class="kpi-title">Lucro Líquido Acumulado</span>
+                        <div class="kpi-icon"><i data-lucide="trending-up"></i></div>
+                    </div>
+                    <div class="kpi-value" id="sales-kpi-lucro">R$ 0,00</div>
+                </div>
+                <div class="kpi-card blue">
+                    <div class="kpi-header">
+                        <span class="kpi-title">Margem de Lucro Média</span>
+                        <div class="kpi-icon"><i data-lucide="pie-chart"></i></div>
+                    </div>
+                    <div class="kpi-value" id="sales-kpi-margem">0,0%</div>
+                </div>
+                <div class="kpi-card blue">
+                    <div class="kpi-header">
+                        <span class="kpi-title">Total de Carros Entregues</span>
+                        <div class="kpi-icon"><i data-lucide="check-circle-2"></i></div>
+                    </div>
+                    <div class="kpi-value" id="sales-kpi-entregues">0</div>
+                </div>
+            </div>
+
+            <div class="table-controls" style="justify-content: flex-end;">
+                <button class="btn btn-secondary btn-export-excel" onclick="exportVendasToExcel()" title="Exportar relatório de fechamentos para Excel">
+                    <i data-lucide="file-spreadsheet"></i> Exportar Vendas
+                </button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="saas-table">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Cliente</th>
+                            <th>Veículo</th>
+                            <th>Valor de Venda</th>
+                            <th>Lucro Real</th>
+                            <th>Margem</th>
+                            <th>Tipo de Venda</th>
+                            <th style="text-align: center;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vendas-table-body">
+                        <!-- Preenchido via app.js -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             ABA 5: FINANCEIRO
+             ========================================== -->
+        <section id="financeiro-tab" class="tab-pane">
+            <div class="finance-summary-grid">
+                <div class="finance-card inputs">
+                    <div class="finance-card-icon"><i data-lucide="arrow-down-left"></i></div>
+                    <div class="finance-card-details">
+                        <h4>Entradas (Receitas)</h4>
+                        <p id="fin-entradas">R$ 0,00</p>
+                        <span>Vendas de veículos concretizadas</span>
+                    </div>
+                </div>
+
+                <div class="finance-card outputs">
+                    <div class="finance-card-icon"><i data-lucide="arrow-up-right"></i></div>
+                    <div class="finance-card-details">
+                        <h4>Saídas (Aquisição)</h4>
+                        <p id="fin-saidas">R$ 0,00</p>
+                        <span>Custo pago por veículos de estoque</span>
+                    </div>
+                </div>
+
+                <div class="finance-card expenses">
+                    <div class="finance-card-icon"><i data-lucide="wrench"></i></div>
+                    <div class="finance-card-details">
+                        <h4>Despesas Operacionais</h4>
+                        <p id="fin-despesas">R$ 0,00</p>
+                        <span>Preparação, polimento e anúncios</span>
+                    </div>
+                </div>
+
+                <div class="finance-card net-profit">
+                    <div class="finance-card-icon"><i data-lucide="coins"></i></div>
+                    <div class="finance-card-details">
+                        <h4>Lucro Líquido Real</h4>
+                        <p id="fin-liquido">R$ 0,00</p>
+                        <span>Faturamento total livre de custos</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="charts-grid" style="grid-template-columns: 2fr 1fr; margin-bottom: 24px;">
+                <div class="dashboard-panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <h3>Detalhamento de Lançamentos de Custos</h3>
+                            <p>Gastos específicos com preparação ou operacional</p>
+                        </div>
+                        <div style="display:flex; gap:8px;">
+                            <button class="btn btn-secondary btn-sm btn-export-excel" onclick="exportDespesasToExcel()" title="Exportar despesas de preparação para Excel">
+                                <i data-lucide="file-spreadsheet"></i> Exportar
+                            </button>
+                            <button class="btn btn-primary btn-sm" onclick="openAddDespesaModal()">
+                                <i data-lucide="plus"></i> Registrar Despesa
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-responsive" style="max-height: 350px;">
+                        <table class="saas-table">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Descrição</th>
+                                    <th>Veículo Relacionado</th>
+                                    <th>Categoria</th>
+                                    <th>Valor</th>
+                                    <th style="text-align: center;">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="financeiro-table-body">
+                                <!-- Preenchido via app.js -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="dashboard-panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <h3>Distribuição de Custos</h3>
+                            <p>Onde estão concentradas as despesas</p>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart-finance-distribution"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             ABA 6: AGENDA OPERACIONAL
+             ========================================== -->
+        <section id="agenda-tab" class="tab-pane">
+            <div class="agenda-layout">
+                <!-- Sidebar da agenda -->
+                <div class="agenda-sidebar">
+                    <div class="mini-calendar">
+                        <div class="mini-cal-header">
+                            <span>Maio de 2026</span>
+                            <div style="display:flex; gap: 8px;">
+                                <i data-lucide="chevron-left" style="cursor:pointer; width:16px;"></i>
+                                <i data-lucide="chevron-right" style="cursor:pointer; width:16px;"></i>
+                            </div>
+                        </div>
+                        <div class="mini-cal-grid">
+                            <span class="cal-day-label">D</span>
+                            <span class="cal-day-label">S</span>
+                            <span class="cal-day-label">T</span>
+                            <span class="cal-day-label">Q</span>
+                            <span class="cal-day-label">Q</span>
+                            <span class="cal-day-label">S</span>
+                            <span class="cal-day-label">S</span>
+                            
+                            <!-- Dias mockados -->
+                            <span class="cal-day-num text-muted">26</span>
+                            <span class="cal-day-num text-muted">27</span>
+                            <span class="cal-day-num text-muted">28</span>
+                            <span class="cal-day-num text-muted">29</span>
+                            <span class="cal-day-num text-muted">30</span>
+                            <span class="cal-day-num">1</span>
+                            <span class="cal-day-num">2</span>
+                            <span class="cal-day-num">3</span>
+                            <span class="cal-day-num">4</span>
+                            <span class="cal-day-num">5</span>
+                            <span class="cal-day-num">6</span>
+                            <span class="cal-day-num">7</span>
+                            <span class="cal-day-num">8</span>
+                            <span class="cal-day-num">9</span>
+                            <span class="cal-day-num">10</span>
+                            <span class="cal-day-num">11</span>
+                            <span class="cal-day-num">12</span>
+                            <span class="cal-day-num">13</span>
+                            <span class="cal-day-num">14</span>
+                            <span class="cal-day-num">15</span>
+                            <span class="cal-day-num">16</span>
+                            <span class="cal-day-num">17</span>
+                            <span class="cal-day-num">18</span>
+                            <span class="cal-day-num">19</span>
+                            <span class="cal-day-num has-event">20</span>
+                            <span class="cal-day-num has-event">21</span>
+                            <span class="cal-day-num active has-event">22</span>
+                            <span class="cal-day-num has-event">23</span>
+                            <span class="cal-day-num">24</span>
+                            <span class="cal-day-num">25</span>
+                            <span class="cal-day-num">26</span>
+                            <span class="cal-day-num">27</span>
+                            <span class="cal-day-num">28</span>
+                            <span class="cal-day-num">29</span>
+                            <span class="cal-day-num">30</span>
+                        </div>
+                    </div>
+
+                    <div class="agenda-categories">
+                        <h4>Legenda de Compromissos</h4>
+                        <div class="category-item">
+                            <span class="category-dot dot-visitas"></span>
+                            <span>Visitas & Apresentações</span>
+                        </div>
+                        <div class="category-item">
+                            <span class="category-dot dot-entregas"></span>
+                            <span>Entregas de Carros</span>
+                        </div>
+                        <div class="category-item">
+                            <span class="category-dot dot-revisao"></span>
+                            <span>Revisão & Estética</span>
+                        </div>
+                        <div class="category-item">
+                            <span class="category-dot dot-documentos"></span>
+                            <span>Vistorias & Cartório</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeline detalhada da agenda -->
+                <div class="agenda-timeline">
+                    <div class="panel-header" style="margin-bottom:0px; padding-bottom: 10px; border-bottom: 1px solid var(--border-subtle)">
+                        <div class="panel-title">
+                            <h3>Compromissos Agendados (Hoje)</h3>
+                            <p>Rotina operacional do operador sem ponto físico</p>
+                        </div>
+                        <button class="btn btn-primary btn-sm" onclick="openAddAgendaModal()">
+                            <i data-lucide="plus"></i> Agendar
+                        </button>
+                    </div>
+                    <div id="agenda-timeline-body" style="display:flex; flex-direction:column; gap:16px;">
+                        <!-- Preenchido via app.js -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             ABA 7: GUIA EXCEL
+             ========================================== -->
+        <section id="excel-tab" class="tab-pane">
+            <div class="excel-guide-container">
+                <div class="excel-intro">
+                    <div class="excel-intro-icon"><i data-lucide="file-spreadsheet"></i></div>
+                    <div class="excel-intro-text">
+                        <h3>Guia de Tradução Visual: Do SaaS para o Excel</h3>
+                        <p>Marcelo, você pode recriar esta mesma estética profissional de HubSpot e PipeDrive diretamente no seu Excel. Uma planilha bem configurada visualmente gera o mesmo valor de organização e clareza de um software nativo, sem custar mensalidade. Abaixo está o passo a passo exato do seu <strong>Design System no Excel</strong>.</p>
+                    </div>
+                </div>
+
+                <!-- Passo 1: Cores -->
+                <div class="guide-step">
+                    <div class="guide-step-header">
+                        <span class="step-num">1</span>
+                        <h4>Configuração da Paleta de Cores Customizada</h4>
+                    </div>
+                    <p>No Excel, não utilize as cores padrão (vermelho vivo, azul clássico). Vá em <strong>Página Inicial > Cor de Preenchimento > Mais Cores > Personalizado</strong> e defina o padrão Dark Mode digitando os valores HEX ou RGB:</p>
+                    <div class="color-palette-guide">
+                        <div class="color-guide-item">
+                            <div class="color-preview bg"></div>
+                            <p>Fundo Principal</p>
+                            <span>HEX: #111827</span><br>
+                            <span style="font-size:9px;color:var(--text-muted)">RGB: (17, 24, 39)</span>
+                        </div>
+                        <div class="color-guide-item">
+                            <div class="color-preview panel"></div>
+                            <p>Painel de Dados</p>
+                            <span>HEX: #1F2937</span><br>
+                            <span style="font-size:9px;color:var(--text-muted)">RGB: (31, 41, 55)</span>
+                        </div>
+                        <div class="color-guide-item">
+                            <div class="color-preview card"></div>
+                            <p>Destaque / Célula</p>
+                            <span>HEX: #374151</span><br>
+                            <span style="font-size:9px;color:var(--text-muted)">RGB: (55, 65, 81)</span>
+                        </div>
+                        <div class="color-guide-item">
+                            <div class="color-preview blue"></div>
+                            <p>Azul Destaque</p>
+                            <span>HEX: #2563EB</span><br>
+                            <span style="font-size:9px;color:var(--text-muted)">RGB: (37, 99, 235)</span>
+                        </div>
+                    </div>
+                    <div class="color-palette-guide" style="margin-top: 10px;">
+                        <div class="color-guide-item">
+                            <div class="color-preview green"></div>
+                            <p>Verde Lucro</p>
+                            <span>HEX: #10B981</span><br>
+                            <span style="font-size:9px;color:var(--text-muted)">RGB: (16, 185, 129)</span>
+                        </div>
+                        <div class="color-guide-item">
+                            <div class="color-preview red"></div>
+                            <p>Vermelho Alerta</p>
+                            <span>HEX: #EF4444</span><br>
+                            <span style="font-size:9px;color:var(--text-muted)">RGB: (239, 68, 68)</span>
+                        </div>
+                        <div class="color-guide-item" style="grid-column: span 2; background-color: rgba(255,255,255,0.02)">
+                            <p style="margin-top:10px; font-weight:600; color:var(--text-light)">Dica de Ouro de UX</p>
+                            <p style="font-size:12px; color:var(--text-muted); padding:5px 10px">Selecione toda a planilha do Excel e aplique o preenchimento <strong>#111827</strong>. Para tabelas, utilize linhas com fundo alternado entre <strong>#1F2937</strong> e <strong>#17212D</strong>.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Passo 2: Tipografia -->
+                <div class="guide-step">
+                    <div class="guide-step-header">
+                        <span class="step-num">2</span>
+                        <h4>Tipografia e Hierarquia Visual</h4>
+                    </div>
+                    <ul class="guide-list">
+                        <li><strong>Fonte única:</strong> Altere a fonte padrão (Calibri) de toda a sua planilha para <strong>Segoe UI</strong> (instalada por padrão no Windows e visualmente idêntica à fonte <em>Inter</em> usada em SaaS de ponta).</li>
+                        <li><strong>Hierarquia de Tamanhos:</strong>
+                            <br>- Títulos e KPIs Grandes: <strong>20pt ou 24pt, Negrito</strong>.
+                            <br>- Cabeçalhos de Tabelas: <strong>9pt, Negrito, Caixa Alta, Cor Cinza Claro (#9CA3AF)</strong>.
+                            <br>- Dados da Tabela: <strong>10pt ou 11pt, Normal, Cor Branca (#F9FAFB)</strong>.
+                        </li>
+                        <li><strong>Limpeza de Gridline:</strong> O erro nº 1 de planilhas é manter as linhas de grade cinzas padrão. Vá na aba <strong>Exibir</strong> e desmarque a caixa <strong>Linhas de Grade</strong>. Use bordas manuais finas e discretas na cor cinza escuro para separar as linhas.</li>
+                    </ul>
+                </div>
+
+                <!-- Passo 3: Fórmulas de Suporte -->
+                <div class="guide-step">
+                    <div class="guide-step-header">
+                        <span class="step-num">3</span>
+                        <h4>Fórmulas Cruciais de Negócio</h4>
+                    </div>
+                    <p>Use estas fórmulas exatas na sua tabela de estoque e leads para gerar os cálculos dinâmicos do Dashboard:</p>
+                    
+                    <div style="margin-top: 12px;">
+                        <strong>Dias em Estoque (Diferença entre hoje e data de compra):</strong>
+                        <div class="formula-block">=SE(STATUS="Vendido"; DATA_VENDA - DATA_COMPRA; HOJE() - DATA_COMPRA)</div>
+                        <span style="font-size:11px; color:var(--text-muted)">*Isso evita que carros vendidos continuem somando dias de estoque.</span>
+                    </div>
+
+                    <div style="margin-top: 14px;">
+                        <strong>Lucro e Margem no Veículo:</strong>
+                        <div class="formula-block">Lucro Esperado: =VALOR_VENDA - VALOR_COMPRA - DESPESAS_PREPARACAO</div>
+                        <div class="formula-block">Margem (%): =SE(VALOR_VENDA>0; LUCRO / VALOR_VENDA; 0)</div>
+                    </div>
+                </div>
+
+                <!-- Passo 4: Formatação Condicional -->
+                <div class="guide-step">
+                    <div class="guide-step-header">
+                        <span class="step-num">4</span>
+                        <h4>Formatação Condicional (Veículos Parados +30 dias)</h4>
+                    </div>
+                    <p>Para destacar veículos que estão parados há mais de 30 dias na planilha (essencial para o giro rápido no modelo sem loja física):</p>
+                    <ol class="guide-list" style="margin-left: 20px;">
+                        <li>Selecione a coluna de <strong>Dias em Estoque</strong>.</li>
+                        <li>Clique em <strong>Formatação Condicional > Nova Regra > Usar uma fórmula para determinar...</strong>.</li>
+                        <li>Digite a fórmula (considerando que a célula inicial de dias é a G2 e a célula de status é I2):
+                            <div class="formula-block">=E(G2>30; I2<>"Vendido")</div>
+                        </li>
+                        <li>Defina o Formato: Preenchimento Vermelho Escuro/Opaco (<strong>#EF4444</strong> em 20% de opacidade) e fonte Vermelha Clara.</li>
+                    </ol>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ==========================================================
+         SISTEMA DE MODAIS (POP-UPS INTERATIVOS)
+         ========================================================== -->
+    
+    <!-- Modal 1: Adicionar Lead -->
+    <div class="modal-overlay" id="modal-add-lead">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Adicionar Novo Lead no CRM</h3>
+                <button class="close-modal-btn" onclick="closeAddLeadModal()"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-add-lead" onsubmit="saveNewLead(event)">
+                    <div class="form-group">
+                        <label for="lead-name">Nome do Cliente</label>
+                        <input type="text" id="lead-name" class="form-control" placeholder="Ex: Carlos Silva" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="lead-phone">Telefone / WhatsApp</label>
+                        <input type="text" id="lead-phone" class="form-control" placeholder="Ex: (11) 99876-5432" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="lead-interest">Veículo de Interesse</label>
+                        <select id="lead-interest" class="form-control" required>
+                            <!-- Populado dinamicamente com carros disponíveis -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="lead-origin">Origem do Lead</label>
+                        <select id="lead-origin" class="form-control" required>
+                            <option value="Instagram">Instagram</option>
+                            <option value="WhatsApp">WhatsApp Direto</option>
+                            <option value="Indicação">Indicação</option>
+                            <option value="OLX/Webmotors">OLX / Webmotors</option>
+                            <option value="Outros">Outros</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="lead-status">Fase Inicial no CRM</label>
+                        <select id="lead-status" class="form-control" required>
+                            <option value="novo lead">Novo Lead (Entrada)</option>
+                            <option value="contato realizado">Contato Realizado</option>
+                            <option value="negociação">Negociação Ativa</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAddLeadModal()">Cancelar</button>
+                <button class="btn btn-primary" type="submit" form="form-add-lead">Criar Lead</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 2: Adicionar Veículo (Atualizado com Placa, Cor, Chassi e Upload) -->
+    <div class="modal-overlay" id="modal-add-car">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Cadastrar Veículo no Estoque</h3>
+                <button class="close-modal-btn" onclick="closeAddCarModal()"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-add-car" onsubmit="saveNewCar(event)">
+                    <!-- Foto Upload Wrapper -->
+                    <div class="form-group">
+                        <label>Foto do Veículo</label>
+                        <div class="photo-upload-wrapper">
+                            <div class="photo-preview-circle" id="car-photo-preview">
+                                <i data-lucide="image"></i>
+                            </div>
+                            <label for="car-photo-input" class="photo-upload-btn-label">
+                                <i data-lucide="upload-cloud"></i>
+                                <span>Selecionar Imagem</span>
+                            </label>
+                            <input type="file" id="car-photo-input" accept="image/*" style="display:none;" onchange="previewVehiclePhoto(this, 'car-photo-preview')">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="car-brand-model">Marca / Modelo</label>
+                        <input type="text" id="car-brand-model" class="form-control" placeholder="Ex: Jeep Compass Longitude 2.0 Flex" required>
+                    </div>
+
+                    <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div>
+                            <label for="car-year">Ano Modelo</label>
+                            <input type="text" id="car-year" class="form-control" placeholder="Ex: 2021/2021" required>
+                        </div>
+                        <div>
+                            <label for="car-km">KM</label>
+                            <input type="number" id="car-km" class="form-control" placeholder="Ex: 42000" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div>
+                            <label for="car-buy-val">Valor de Compra (R$)</label>
+                            <input type="number" id="car-buy-val" class="form-control" placeholder="Ex: 110000" required>
+                        </div>
+                        <div>
+                            <label for="car-sell-val">Valor de Venda (R$)</label>
+                            <input type="number" id="car-sell-val" class="form-control" placeholder="Ex: 125900" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div>
+                            <label for="car-plate">Placa</label>
+                            <input type="text" id="car-plate" class="form-control" placeholder="Ex: BRA2E26" style="text-transform:uppercase;">
+                        </div>
+                        <div>
+                            <label for="car-color">Cor</label>
+                            <input type="text" id="car-color" class="form-control" placeholder="Ex: Cinza Metálico">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="car-chassis">Número do Chassi</label>
+                        <input type="text" id="car-chassis" class="form-control" placeholder="Ex: 9BWZZZ99Z99999123" style="text-transform:uppercase;">
+                    </div>
+
+                    <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div>
+                            <label for="car-type">Tipo de Venda</label>
+                            <select id="car-type" class="form-control" required>
+                                <option value="convencional">Convencional</option>
+                                <option value="repasse">Repasse</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="car-status">Status Inicial</label>
+                            <select id="car-status" class="form-control" required>
+                                <option value="disponivel">Disponível</option>
+                                <option value="preparacao">Em Preparação</option>
+                                <option value="reservado">Reservado</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="car-days">Dias em Estoque Inicial</label>
+                        <input type="number" id="car-days" class="form-control" placeholder="Ex: 0" value="0">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAddCarModal()">Cancelar</button>
+                <button class="btn btn-success" type="submit" form="form-add-car">Salvar Carro</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 3: Timeline de Ações do Lead -->
+    <div class="modal-overlay" id="modal-lead-timeline">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="timeline-client-name">Histórico & Ações: Cliente</h3>
+                <button class="close-modal-btn" onclick="closeTimelineModal()"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <h4 style="font-size:12px; color:var(--text-muted); margin-bottom:10px; text-transform:uppercase;">Timeline de Contatos</h4>
+                <div class="timeline-modal-list" id="timeline-events-container">
+                    <!-- Eventos gerados no JS -->
+                </div>
+
+                <div style="height:1px; background-color:var(--border-subtle); margin:16px 0;"></div>
+
+                <form id="form-add-interaction" onsubmit="addLeadInteraction(event)">
+                    <input type="hidden" id="interaction-lead-id">
+                    <div class="form-group">
+                        <label for="interaction-text">Registrar Novo Contato / Ação</label>
+                        <textarea id="interaction-text" class="form-control" style="height: 60px; resize: none;" placeholder="Descreva o que foi conversado..." required></textarea>
+                    </div>
+                    <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div>
+                            <label for="interaction-next">Próxima Ação</label>
+                            <input type="text" id="interaction-next" class="form-control" placeholder="Ex: Levar carro para teste" required>
+                        </div>
+                        <div>
+                            <label for="interaction-status">Mover de Fase</label>
+                            <select id="interaction-status" class="form-control">
+                                <option value="no-change">Manter Fase Atual</option>
+                                <option value="novo lead">Novo Lead</option>
+                                <option value="contato realizado">Contato Realizado</option>
+                                <option value="negociação">Negociação Ativa</option>
+                                <option value="sem resposta">Sem Resposta</option>
+                                <option value="fechado">Vendido / Ganho 🏆</option>
+                                <option value="perdido">Perdido</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" style="width: 100%; margin-top:8px;" type="submit">Registrar Interação</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 4: Registrar Venda Concluída -->
+    <div class="modal-overlay" id="modal-sell-car">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🏆 Concluir Venda de Veículo</h3>
+                <button class="close-modal-btn" onclick="closeSellModal()"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-sell-car" onsubmit="saveSale(event)">
+                    <input type="hidden" id="sell-car-id">
+                    <div class="form-group">
+                        <label>Veículo Selecionado</label>
+                        <input type="text" id="sell-car-name" class="form-control" readonly style="background-color: var(--card-bg); opacity: 0.8;">
+                    </div>
+                    <div class="form-group">
+                        <label for="sell-client-name">Nome do Comprador / Cliente</label>
+                        <input type="text" id="sell-client-name" class="form-control" placeholder="Ex: Roberto Alencar" required>
+                    </div>
+                    <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div>
+                            <label for="sell-price">Preço Final de Venda (R$)</label>
+                            <input type="number" id="sell-price" class="form-control" placeholder="Ex: 95000" required>
+                        </div>
+                        <div>
+                            <label for="sell-date">Data da Venda</label>
+                            <input type="date" id="sell-date" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="sell-type">Canal / Tipo de Venda</label>
+                        <select id="sell-type" class="form-control" required>
+                            <option value="convencional">Convencional (Venda Direta)</option>
+                            <option value="repasse">Repasse (Parceiro/Lojista)</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeSellModal()">Cancelar</button>
+                <button class="btn btn-success" type="submit" form="form-sell-car">Registrar Recebimento</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 5: Registrar Despesa Avulsa -->
+    <div class="modal-overlay" id="modal-add-despesa">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Registrar Nova Despesa</h3>
+                <button class="close-modal-btn" onclick="closeAddDespesaModal()"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-add-despesa" onsubmit="saveNewDespesa(event)">
+                    <div class="form-group">
+                        <label for="exp-desc">Descrição do Gasto</label>
+                        <input type="text" id="exp-desc" class="form-control" placeholder="Ex: Polimento cristalizado" required>
+                    </div>
+                    <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div>
+                            <label for="exp-val">Valor (R$)</label>
+                            <input type="number" id="exp-val" class="form-control" placeholder="Ex: 350" required>
+                        </div>
+                        <div>
+                            <label for="exp-date">Data</label>
+                            <input type="date" id="exp-date" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="exp-car">Carro Relacionado (Opcional)</label>
+                        <select id="exp-car" class="form-control">
+                            <option value="">Nenhum (Custo Operacional Geral)</option>
+                            <!-- Populado no JS -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="exp-cat">Categoria</label>
+                        <select id="exp-cat" class="form-control" required>
+                            <option value="Preparação">Estética & Preparação</option>
+                            <option value="Mecânica">Manutenção & Mecânica</option>
+                            <option value="Marketing">Marketing & Anúncios</option>
+                            <option value="Operacional">Operacional Geral</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAddDespesaModal()">Cancelar</button>
+                <button class="btn btn-primary" type="submit" form="form-add-despesa">Lançar Custo</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 6: Agendar Compromisso -->
+    <div class="modal-overlay" id="modal-add-agenda">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Agendar Compromisso Operacional</h3>
+                <button class="close-modal-btn" onclick="closeAddAgendaModal()"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-add-agenda" onsubmit="saveNewAgenda(event)">
+                    <div class="form-group">
+                        <label for="age-title">Título do Compromisso</label>
+                        <input type="text" id="age-title" class="form-control" placeholder="Ex: Entrega Jeep Compass" required>
+                    </div>
+                    <div class="form-group" style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 12px;">
+                        <div>
+                            <label for="age-date">Data</label>
+                            <input type="date" id="age-date" class="form-control" required>
+                        </div>
+                        <div>
+                            <label for="age-time">Horário</label>
+                            <input type="time" id="age-time" class="form-control" placeholder="Ex: 14:00" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="age-car">Carro Relacionado</label>
+                        <select id="age-car" class="form-control">
+                            <!-- Populado dinamicamente -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="age-cat">Tipo de Atividade</label>
+                        <select id="age-cat" class="form-control" required>
+                            <option value="visitas">Visita & Apresentação</option>
+                            <option value="entregas">Entrega de Carro Vendido</option>
+                            <option value="revisao">Revisão, Polimento ou Oficina</option>
+                            <option value="documentos">Vistoria ou Cartório</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="age-desc">Observações / Local</label>
+                        <input type="text" id="age-desc" class="form-control" placeholder="Ex: Shopping ABC - G3">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAddAgendaModal()">Cancelar</button>
+                <button class="btn btn-primary" type="submit" form="form-add-agenda">Agendar Compromisso</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         NOVOS MODAIS DE EDIÇÃO INTEGRADOS (VERSÃO 2.0)
+         ============================================================ -->
+
+    <!-- EDITAR VEÍCULO -->
+    <div class="modal-overlay" id="modal-edit-car">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>✏️ Editar Veículo</h3>
+                <button class="close-modal-btn" onclick="closeEditCarModal()"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-edit-car" onsubmit="saveEditCar(event)">
+                    <input type="hidden" id="edit-car-id">
+                    
+                    <!-- Foto Edit Wrapper -->
+                    <div class="form-group">
+                        <label>Foto do Veículo</label>
+                        <div class="photo-upload-wrapper">
+                            <div class="photo-preview-circle" id="edit-car-photo-preview">
+                                <i data-lucide="image"></i>
+                            </div>
+                            <label for="edit-car-photo-input" class="photo-upload-btn-label">
+                                <i data-lucide="upload-cloud"></i>
+                                <span>Alterar Imagem</span>
+                            </label>
+                            <input type="file" id="edit-car-photo-input" accept="image/*" style="display:none;" onchange="previewVehiclePhoto(this, 'edit-car-photo-preview')">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Marca / Modelo</label>
+                        <input type="text" id="edit-car-brand-model" class="form-control" required>
+                    </div>
+                    <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div><label>Ano Modelo</label><input type="text" id="edit-car-year" class="form-control" required></div>
+                        <div><label>KM</label><input type="number" id="edit-car-km" class="form-control" required></div>
+                    </div>
+                    <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div><label>Valor de Compra (R$)</label><input type="number" id="edit-car-buy-val" class="form-control" required></div>
+                        <div><label>Valor de Venda (R$)</label><input type="number" id="edit-car-sell-val" class="form-control" required></div>
+                    </div>
+                    <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div><label>Placa</label><input type="text" id="edit-car-plate" class="form-control" style="text-transform:uppercase;"></div>
+                        <div><label>Cor</label><input type="text" id="edit-car-color" class="form-control"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>Número do Chassi</label>
+                        <input type="text" id="edit-car-chassis" class="form-control" style="text-transform:uppercase;">
+                    </div>
+                    <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div><label>Tipo de Venda</label>
+                            <select id="edit-car-type" class="form-control">
+                                <option value="convencional">Convencional</option>
+                                <option value="repasse">Repasse</option>
+                            </select>
+                        </div>
+                        <div><label>Status</label>
+                            <select id="edit-car-status" class="form-control">
+                                <option value="disponivel">Disponível</option>
+                                <option value="preparacao">Em Preparação</option>
+                                <option value="reservado">Reservado</option>
+                                <option value="vendido">Vendido</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Dias em Estoque</label>
+                        <input type="number" id="edit-car-days" class="form-control">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeEditCarModal()">Cancelar</button>
+                <button class="btn btn-primary" type="submit" form="form-edit-car">Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- EDITAR LEAD -->
+    <div class="modal-overlay" id="modal-edit-lead">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>✏️ Editar Lead</h3>
+                <button class="close-modal-btn" onclick="closeEditLeadModal()"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-edit-lead" onsubmit="saveEditLead(event)">
+                    <input type="hidden" id="edit-lead-id">
+                    <div class="form-group"><label>Nome do Cliente</label><input type="text" id="edit-lead-name" class="form-control" required></div>
+                    <div class="form-group"><label>Telefone / WhatsApp</label><input type="text" id="edit-lead-phone" class="form-control" required></div>
+                    <div class="form-group"><label>Veículo de Interesse</label><select id="edit-lead-interest" class="form-control"></select></div>
+                    <div class="form-group"><label>Origem do Lead</label>
+                        <select id="edit-lead-origin" class="form-control">
+                            <option value="Instagram">Instagram</option>
+                            <option value="WhatsApp">WhatsApp Direto</option>
+                            <option value="Indicação">Indicação</option>
+                            <option value="OLX/Webmotors">OLX / Webmotors</option>
+                            <option value="Outros">Outros</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Fase no CRM</label>
+                        <select id="edit-lead-status" class="form-control">
+                            <option value="novo lead">Novo Lead</option>
+                            <option value="contato realizado">Contato Realizado</option>
+                            <option value="negociação">Negociação Ativa</option>
+                            <option value="sem resposta">Sem Resposta</option>
+                            <option value="fechado">Fechado (Ganho)</option>
+                            <option value="perdido">Perdido</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeEditLeadModal()">Cancelar</button>
+                <button class="btn btn-primary" type="submit" form="form-edit-lead">Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- EDITAR VENDA -->
+    <div class="modal-overlay" id="modal-edit-venda">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>✏️ Editar Venda</h3>
+                <button class="close-modal-btn" onclick="closeEditVendaModal()"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-edit-venda" onsubmit="saveEditVenda(event)">
+                    <input type="hidden" id="edit-venda-id">
+                    <div class="form-group"><label>Nome do Comprador</label><input type="text" id="edit-venda-client" class="form-control" required></div>
+                    <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div><label>Preço de Venda (R$)</label><input type="number" id="edit-venda-price" class="form-control" required></div>
+                        <div><label>Data da Venda</label><input type="date" id="edit-venda-date" class="form-control" required></div>
+                    </div>
+                    <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div><label>Lucro Real (R$)</label><input type="number" id="edit-venda-profit" class="form-control" required></div>
+                        <div><label>Margem (%)</label><input type="number" id="edit-venda-margin" class="form-control" step="0.1" required></div>
+                    </div>
+                    <div class="form-group"><label>Tipo de Venda</label>
+                        <select id="edit-venda-type" class="form-control">
+                            <option value="convencional">Convencional</option>
+                            <option value="repasse">Repasse</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeEditVendaModal()">Cancelar</button>
+                <button class="btn btn-primary" type="submit" form="form-edit-venda">Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- EDITAR DESPESA -->
+    <div class="modal-overlay" id="modal-edit-despesa">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>✏️ Editar Despesa</h3>
+                <button class="close-modal-btn" onclick="closeEditDespesaModal()"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-edit-despesa" onsubmit="saveEditDespesa(event)">
+                    <input type="hidden" id="edit-exp-id">
+                    <div class="form-group"><label>Descrição</label><input type="text" id="edit-exp-desc" class="form-control" required></div>
+                    <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div><label>Valor (R$)</label><input type="number" id="edit-exp-val" class="form-control" required></div>
+                        <div><label>Data</label><input type="date" id="edit-exp-date" class="form-control" required></div>
+                    </div>
+                    <div class="form-group"><label>Carro Relacionado</label><select id="edit-exp-car" class="form-control"></select></div>
+                    <div class="form-group"><label>Categoria</label>
+                        <select id="edit-exp-cat" class="form-control">
+                            <option value="Preparação">Estética & Preparação</option>
+                            <option value="Mecânica">Manutenção & Mecânica</option>
+                            <option value="Marketing">Marketing & Anúncios</option>
+                            <option value="Operacional">Operacional Geral</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeEditDespesaModal()">Cancelar</button>
+                <button class="btn btn-primary" type="submit" form="form-edit-despesa">Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- EDITAR AGENDA -->
+    <div class="modal-overlay" id="modal-edit-agenda">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>✏️ Editar Compromisso</h3>
+                <button class="close-modal-btn" onclick="closeEditAgendaModal()"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-edit-agenda" onsubmit="saveEditAgenda(event)">
+                    <input type="hidden" id="edit-age-id">
+                    <div class="form-group"><label>Título</label><input type="text" id="edit-age-title" class="form-control" required></div>
+                    <div class="form-group" style="display:grid;grid-template-columns:1.2fr 0.8fr;gap:12px;">
+                        <div><label>Data</label><input type="date" id="edit-age-date" class="form-control" required></div>
+                        <div><label>Horário</label><input type="time" id="edit-age-time" class="form-control" required></div>
+                    </div>
+                    <div class="form-group"><label>Carro Relacionado</label><select id="edit-age-car" class="form-control"></select></div>
+                    <div class="form-group"><label>Tipo de Atividade</label>
+                        <select id="edit-age-cat" class="form-control">
+                            <option value="visitas">Visita & Apresentação</option>
+                            <option value="entregas">Entrega de Carro Vendido</option>
+                            <option value="revisao">Revisão, Polimento ou Oficina</option>
+                            <option value="documentos">Vistoria ou Cartório</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Observações / Local</label><input type="text" id="edit-age-desc" class="form-control"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeEditAgendaModal()">Cancelar</button>
+                <button class="btn btn-primary" type="submit" form="form-edit-agenda">Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE IMPRESSÃO DE RECIBO PDF (VERSÃO 2.0) -->
+    <div class="modal-overlay" id="modal-receipt-print" style="z-index: 10000; backdrop-filter: blur(10px);">
+        <div class="modal-content" style="width: 100%; max-width: 800px; border-radius: var(--radius-lg); overflow: hidden;">
+            <div class="modal-header print-no-show" style="border-bottom: 1px solid var(--border-subtle); padding: 16px 24px;">
+                <h3 style="font-size:16px; font-weight:700;"><i data-lucide="file-check" style="vertical-align:middle; margin-right:8px; color:var(--green-profit)"></i> Recibo de Venda PDF</h3>
+                <div style="display:flex; gap:10px; margin-left:auto; align-items:center;">
+                    <button class="btn btn-success" style="padding:8px 16px; font-size:12px;" onclick="window.print()">
+                        <i data-lucide="printer"></i> Imprimir / Salvar PDF
+                    </button>
+                    <button class="close-modal-btn" onclick="closeReceiptPrintModal()"><i data-lucide="x"></i></button>
+                </div>
+            </div>
+            <div class="modal-body" style="max-height: 550px; padding: 0; background-color:#ffffff;">
+                <div class="receipt-container" id="receipt-print-content">
+                    <!-- Preenchido via JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TELA DE LOGIN (OVERLAY SAAS PREMIUM) -->
+    <div class="modal-overlay active" id="login-overlay" style="z-index: 99999; backdrop-filter: blur(20px);">
+        <div class="modal-content" style="width: 420px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); padding: 10px;">
+            <div class="modal-body" style="max-height: unset; padding: 24px 16px;">
+                <div style="text-align: center; margin-bottom: 24px;">
+                    <div style="background: linear-gradient(135deg, var(--blue-primary), var(--purple-meta)); width: 48px; height: 48px; border-radius: var(--radius-md); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px; box-shadow: var(--shadow-md);">
+                        <i data-lucide="car" style="width: 26px; height: 26px; color: var(--text-light);"></i>
+                    </div>
+                    <h2 style="font-size: 20px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 4px;">Acessar AutoDrive CRM</h2>
+                    <p style="font-size: 12px; color: var(--text-muted);">Insira suas credenciais da nuvem</p>
+                </div>
+
+                <!-- Alerta de Demonstração / Setup -->
+                <div id="login-demo-notice" style="background-color: rgba(37, 99, 235, 0.08); border: 1px solid rgba(37, 99, 235, 0.2); border-radius: var(--radius-md); padding: 14px; margin-bottom: 20px; font-size: 11px; line-height: 1.4; color: var(--text-muted);">
+                    <strong style="color:var(--text-light); display:block; margin-bottom:2px;"><i data-lucide="info" style="width:12px; height:12px; vertical-align:middle; margin-right:4px;"></i> Modo de Demonstração Ativo</strong>
+                    O sistema está rodando localmente. Para ativar a persistência na nuvem (PostgreSQL), configure as chaves do Supabase no topo do seu arquivo <code>app.js</code>. 
+                    <br><button class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 9px; margin-top: 8px; height: auto;" onclick="bypassLoginForDemo()">Entrar no Modo Demo</button>
+                </div>
+
+                <div id="login-error-message" style="display:none; background-color: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: var(--radius-md); padding: 10px; margin-bottom: 20px; font-size: 12px; color: var(--red-alert);">
+                    Credenciais incorretas ou erro de comunicação. Tente novamente.
+                </div>
+
+                <form id="form-login" onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label for="login-email">E-mail</label>
+                        <input type="email" id="login-email" class="form-control" placeholder="exemplo@email.com" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label for="login-password">Senha</label>
+                        <input type="password" id="login-password" class="form-control" placeholder="••••••••" required>
+                    </div>
+                    <button class="btn btn-primary" type="submit" style="width: 100%; padding: 12px; font-weight: 700;">
+                        Iniciar Sessão
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- JS Principal da Aplicação -->
+    <script src="app.js"></script>
+</body>
+</html>
