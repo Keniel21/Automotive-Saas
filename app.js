@@ -671,9 +671,19 @@ async function deleteCarConfirm(carId) {
 // I. LEADS / KANBAN
 // --------------------------------------------------------------------------
 function renderKanban(searchQuery = '') {
+    const statusToIdMap = {
+        'novo lead': 'novo',
+        'contato realizado': 'contato',
+        'negociação': 'negociacao',
+        'sem resposta': 'sem-resposta',
+        'fechado': 'fechado',
+        'perdido': 'perdido'
+    };
+
     const columns = ['novo lead', 'contato realizado', 'negociação', 'sem resposta', 'fechado', 'perdido'];
     columns.forEach(col => {
-        const container = document.getElementById(`cards-${col.replace(' ', '-')}`);
+        const idSuffix = statusToIdMap[col] || col;
+        const container = document.getElementById(`cards-${idSuffix}`);
         if (container) container.innerHTML = "";
     });
     let filteredLeads = leads.filter(l => {
@@ -745,12 +755,14 @@ function renderKanban(searchQuery = '') {
                     <button class="lead-actions-btn" style="color:var(--red-alert)" onclick="deleteLeadConfirm(${lead.id})" title="Excluir"><i data-lucide="trash-2"></i></button>
                 </div>
             </div>`;
-        const colId = `cards-${lead.status.replace(' ', '-')}`;
+        const idSuffix = statusToIdMap[lead.status] || lead.status;
+        const colId = `cards-${idSuffix}`;
         const container = document.getElementById(colId);
         if (container) container.appendChild(card);
     });
     columns.forEach(col => {
-        const label = document.getElementById(`count-${col.replace(' ', '-')}`);
+        const idSuffix = statusToIdMap[col] || col;
+        const label = document.getElementById(`count-${idSuffix}`);
         if (label) label.innerText = colCounts[col];
     });
     lucide.createIcons();
