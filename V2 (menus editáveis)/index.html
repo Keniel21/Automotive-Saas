@@ -341,6 +341,50 @@
              ABA 3: LEADS / CRM (QUADRO KANBAN)
              ========================================== -->
         <section id="leads-tab" class="tab-pane">
+            <!-- Grid de KPIs do CRM -->
+            <div class="dashboard-grid" style="margin-bottom: 24px; margin-top: 10px;">
+                <div class="kpi-card blue">
+                    <div class="kpi-header">
+                        <span class="kpi-title">Total de Leads</span>
+                        <div class="kpi-icon"><i data-lucide="users"></i></div>
+                    </div>
+                    <div class="kpi-value" id="crm-total-leads">0</div>
+                    <div class="kpi-footer">
+                        <span style="color: var(--text-muted);">Cadastrados no sistema</span>
+                    </div>
+                </div>
+                <div class="kpi-card purple">
+                    <div class="kpi-header">
+                        <span class="kpi-title">Leads Ativos</span>
+                        <div class="kpi-icon"><i data-lucide="activity"></i></div>
+                    </div>
+                    <div class="kpi-value" id="crm-ativos-leads">0</div>
+                    <div class="kpi-footer">
+                        <span style="color: var(--text-muted);">Em negociação/contato</span>
+                    </div>
+                </div>
+                <div class="kpi-card yellow">
+                    <div class="kpi-header">
+                        <span class="kpi-title">Sem Resposta</span>
+                        <div class="kpi-icon"><i data-lucide="message-square-off"></i></div>
+                    </div>
+                    <div class="kpi-value" id="crm-sem-resposta-leads">0</div>
+                    <div class="kpi-footer">
+                        <span style="color: var(--text-muted);">Aguardando retorno</span>
+                    </div>
+                </div>
+                <div class="kpi-card green">
+                    <div class="kpi-header">
+                        <span class="kpi-title">Taxa de Conversão</span>
+                        <div class="kpi-icon"><i data-lucide="trending-up"></i></div>
+                    </div>
+                    <div class="kpi-value" id="crm-conversao-leads">0%</div>
+                    <div class="kpi-footer">
+                        <span style="color: var(--text-muted);">Leads fechados (ganhos)</span>
+                    </div>
+                </div>
+            </div>
+
             <div class="crm-controls">
                 <div class="search-wrapper" style="max-width: 320px;">
                     <i data-lucide="search"></i>

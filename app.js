@@ -360,6 +360,7 @@ function switchTab(tabId) {
 
 function updateApplicationState() {
     calculateKPIs();
+    calculateCRMStats();
     renderEstoqueTable();
     populateCarSelects();
     renderKanban();
@@ -398,6 +399,25 @@ function calculateKPIs() {
 
 function formatCurrency(val) {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+}
+
+function calculateCRMStats() {
+    const totalLeads = leads.length;
+    const activeLeads = leads.filter(l => l.status !== 'fechado' && l.status !== 'perdido').length;
+    const semResposta = leads.filter(l => l.status === 'sem resposta').length;
+    const fechados = leads.filter(l => l.status === 'fechado').length;
+    
+    const conversao = totalLeads > 0 ? ((fechados / totalLeads) * 100).toFixed(1) + '%' : '0%';
+    
+    const elTotal = document.getElementById("crm-total-leads");
+    const elAtivos = document.getElementById("crm-ativos-leads");
+    const elSemResp = document.getElementById("crm-sem-resposta-leads");
+    const elConv = document.getElementById("crm-conversao-leads");
+    
+    if (elTotal) elTotal.innerText = totalLeads;
+    if (elAtivos) elAtivos.innerText = activeLeads;
+    if (elSemResp) elSemResp.innerText = semResposta;
+    if (elConv) elConv.innerText = conversao;
 }
 
 // --------------------------------------------------------------------------
@@ -665,24 +685,61 @@ function renderKanban(searchQuery = '') {
         colCounts[lead.status]++;
         const car = estoque.find(c => c.id === lead.interestCarId);
         const carModel = car ? car.model : "Geral / Sem Carro";
+        const carPriceHtml = car ? `<span class="lead-price" style="color: var(--green-profit); font-weight:700; font-size:12px; margin-left:auto;">${formatCurrency(car.sellPrice)}</span>` : '';
+        const phoneClean = lead.phone.replace(/\D/g, '');
+        
         const card = document.createElement("div");
         card.className = "lead-card";
         card.draggable = true;
         card.setAttribute("ondragstart", `dragLead(event, ${lead.id})`);
+        
+        // Add left color border depending on status
+        let leftBorderColor = 'var(--blue-primary)';
+        if (lead.status === 'contato realizado') leftBorderColor = 'var(--purple-meta)';
+        else if (lead.status === 'negociação') leftBorderColor = 'var(--yellow-warning)';
+        else if (lead.status === 'sem resposta') leftBorderColor = 'var(--red-alert)';
+        else if (lead.status === 'fechado') leftBorderColor = 'var(--green-profit)';
+        else if (lead.status === 'perdido') leftBorderColor = 'var(--text-muted)';
+        
+        card.style.borderLeft = `4px solid ${leftBorderColor}`;
+        card.style.paddingLeft = '10px';
+
         const isNegligenciado = lead.lastContactDays > 10 && lead.status !== 'fechado' && lead.status !== 'perdido';
         const contactClass = isNegligenciado ? "lead-last-contact forgotten" : "lead-last-contact";
         const contactIcon = isNegligenciado ? "alert-triangle" : "clock";
         const contactLabel = isNegligenciado ? `Esquecido há ${lead.lastContactDays}d` : `Contato há ${lead.lastContactDays}d`;
+        
         card.innerHTML = `
-            <div class="lead-top">
-                <span class="lead-name">${lead.name}</span>
+            <div class="lead-top" style="display:flex; justify-content:space-between; align-items:center;">
+                <span class="lead-name" style="font-weight:700; font-size:13px; color:var(--text-light);">${lead.name}</span>
                 <span class="lead-origin">${lead.origin}</span>
             </div>
-            <div class="lead-interest"><i data-lucide="car"></i><span>${carModel}</span></div>
-            <div class="lead-divider"></div>
-            <div class="lead-footer">
+            
+            <div style="display:flex; align-items:center; gap:6px; font-size:11px; margin-top:2px;">
+                <a href="https://wa.me/55${phoneClean}" target="_blank" style="color: var(--text-muted); text-decoration:none; display:flex; align-items:center; gap:4px;" title="Conversar no WhatsApp">
+                    <i data-lucide="phone" style="width:12px; height:12px; color:var(--blue-primary);"></i>
+                    <span>${lead.phone}</span>
+                </a>
+            </div>
+
+            <div style="display:flex; align-items:center; margin-top:4px;">
+                <span class="badge convencional" style="display:inline-flex; align-items:center; gap:4px; font-size:10px; padding: 1px 6px;">
+                    <i data-lucide="car" style="width:10px; height:10px;"></i>
+                    ${carModel}
+                </span>
+                ${carPriceHtml}
+            </div>
+
+            <div class="lead-next-action" style="font-size:11px; color:var(--text-muted); background:rgba(255,255,255,0.02); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); padding:6px 8px; margin-top:6px; display:flex; align-items:start; gap:6px;">
+                <i data-lucide="calendar" style="width:12px; height:12px; color:var(--yellow-warning); margin-top:2px; flex-shrink:0;"></i>
+                <span style="line-height:1.3;">${lead.nextAction || 'Sem ação definida'}</span>
+            </div>
+
+            <div class="lead-divider" style="margin-top:8px;"></div>
+            
+            <div class="lead-footer" style="margin-top:2px;">
                 <span class="${contactClass}"><i data-lucide="${contactIcon}"></i>${contactLabel}</span>
-                <div style="display:flex;gap:4px;">
+                <div style="display:flex; gap:4px;">
                     <button class="lead-actions-btn" onclick="openEditLeadModal(${lead.id})" title="Editar"><i data-lucide="pencil"></i></button>
                     <button class="lead-actions-btn" onclick="openTimelineModal(${lead.id})" title="Histórico / Timeline"><i data-lucide="message-square-plus"></i></button>
                     <button class="lead-actions-btn" style="color:var(--red-alert)" onclick="deleteLeadConfirm(${lead.id})" title="Excluir"><i data-lucide="trash-2"></i></button>
