@@ -1,6 +1,6 @@
 // ==========================================================================
 // AUTO DRIVE CRM - CONTROLLER COM SUPABASE & LOCAL FALLBACK (JS)
-// VERSÃO 2.0 - COM EXPORTAÇÃO EXCEL, RECIBO PDF, UPLOADS E EDICÃO COMPLETA
+// VERSÃO 2.0 - Com edição e exclusão em todas as telas
 // ==========================================================================
 
 const SUPABASE_URL = "https://xjmyijeblktwncpivywh.supabase.co"; 
@@ -14,13 +14,13 @@ let sessionUser = null;
 // B. BANCO DE DADOS LOCAL (FALLBACK)
 // --------------------------------------------------------------------------
 let estoque = [
-    { id: 1, model: "Jeep Compass Longitude 2.0 Flex", year: "2021/2021", km: 42000, buyPrice: 110000, sellPrice: 125900, daysInStock: 45, status: "disponivel", type: "convencional", plate: "BRA2E26", color: "Cinza Metálico", chassis: "9BWZZZ99Z99999123", image_url: null },
-    { id: 2, model: "Toyota Corolla XEi 2.0 Flex", year: "2020/2020", km: 58000, buyPrice: 95000, sellPrice: 108500, daysInStock: 12, status: "reservado", type: "convencional", plate: "PLQ7D90", color: "Preto Cristal", chassis: "9BWZZZ99Z99999456", image_url: null },
-    { id: 3, model: "Honda Civic EXL 2.0", year: "2019/2019", km: 64000, buyPrice: 88000, sellPrice: 99900, daysInStock: 35, status: "disponivel", type: "convencional", plate: "OGK3F88", color: "Branco Pérola", chassis: "9BWZZZ99Z99999789", image_url: null },
-    { id: 4, model: "VW Polo Comfortline 1.0 TSI", year: "2022/2023", km: 28000, buyPrice: 72000, sellPrice: 81900, daysInStock: 8, status: "preparacao", type: "convencional", plate: "RTS4G10", color: "Prata", chassis: "9BWZZZ99Z99999321", image_url: null },
-    { id: 5, model: "Chevrolet Onix Plus LTZ Turbo", year: "2021/2021", km: 38000, buyPrice: 65000, sellPrice: 71000, daysInStock: 52, status: "disponivel", type: "repasse", plate: "HNS9F22", color: "Azul", chassis: "9BWZZZ99Z99999654", image_url: null },
-    { id: 6, model: "Hyundai HB20 Evolution 1.0", year: "2020/2021", km: 49000, buyPrice: 53000, sellPrice: 58500, daysInStock: 22, status: "disponivel", type: "repasse", plate: "FTU4B44", color: "Vermelho", chassis: "9BWZZZ99Z99999987", image_url: null },
-    { id: 7, model: "Ford Ka SE 1.0", year: "2019/2019", km: 75000, buyPrice: 38000, sellPrice: 42000, daysInStock: 4, status: "vendido", type: "repasse", plate: "KAS5H77", color: "Branco", chassis: "9BWZZZ99Z99999555", image_url: null }
+    { id: 1, model: "Jeep Compass Longitude 2.0 Flex", year: "2021/2021", km: 42000, buyPrice: 110000, sellPrice: 125900, daysInStock: 45, status: "disponivel", type: "convencional" },
+    { id: 2, model: "Toyota Corolla XEi 2.0 Flex", year: "2020/2020", km: 58000, buyPrice: 95000, sellPrice: 108500, daysInStock: 12, status: "reservado", type: "convencional" },
+    { id: 3, model: "Honda Civic EXL 2.0", year: "2019/2019", km: 64000, buyPrice: 88000, sellPrice: 99900, daysInStock: 35, status: "disponivel", type: "convencional" },
+    { id: 4, model: "VW Polo Comfortline 1.0 TSI", year: "2022/2023", km: 28000, buyPrice: 72000, sellPrice: 81900, daysInStock: 8, status: "preparacao", type: "convencional" },
+    { id: 5, model: "Chevrolet Onix Plus LTZ Turbo", year: "2021/2021", km: 38000, buyPrice: 65000, sellPrice: 71000, daysInStock: 52, status: "disponivel", type: "repasse" },
+    { id: 6, model: "Hyundai HB20 Evolution 1.0", year: "2020/2021", km: 49000, buyPrice: 53000, sellPrice: 58500, daysInStock: 22, status: "disponivel", type: "repasse" },
+    { id: 7, model: "Ford Ka SE 1.0", year: "2019/2019", km: 75000, buyPrice: 38000, sellPrice: 42000, daysInStock: 4, status: "vendido", type: "repasse" }
 ];
 
 let leads = [
@@ -63,34 +63,6 @@ let leadViewMode = 'kanban';
 // --------------------------------------------------------------------------
 document.addEventListener("DOMContentLoaded", async () => {
     setupHeaderDate();
-    
-    // Registrar Service Worker para suporte PWA offline
-    if ('serviceWorker' in navigator) {
-        try {
-            const reg = await navigator.serviceWorker.register('./service-worker.js');
-            console.log('Service Worker registrado com sucesso:', reg.scope);
-        } catch (err) {
-            console.error('Erro ao registrar Service Worker:', err);
-        }
-    }
-    
-    // Inicializa estado da sidebar
-    let isSidebarCollapsed = localStorage.getItem("sidebar-collapsed") === "true";
-    if (window.innerWidth <= 768) {
-        isSidebarCollapsed = true; // Força colapsado no celular por padrão
-    }
-    if (isSidebarCollapsed) {
-        const sidebar = document.querySelector(".sidebar");
-        if (sidebar) sidebar.classList.add("collapsed");
-        const toggleBtn = document.getElementById("sidebar-toggle-btn");
-        if (toggleBtn) {
-            toggleBtn.innerHTML = `<i data-lucide="chevron-right"></i>`;
-        }
-    }
-
-    // Inicializa listeners do formulário de cadastro
-    initializeSignupUI();
-
     if (SUPABASE_URL !== "SUA_SUPABASE_URL_AQUI" && SUPABASE_ANON_KEY !== "SUA_SUPABASE_KEY_AQUI") {
         try {
             supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -150,44 +122,12 @@ async function checkActiveSession() {
     const { data, error } = await supabaseClient.auth.getSession();
     if (data.session) {
         sessionUser = data.session.user;
-        
-        try {
-            const { data: profile, error: pError } = await supabaseClient
-                .from('profiles')
-                .select('*')
-                .eq('id', sessionUser.id)
-                .single();
-                
-            if (pError || !profile || !profile.is_approved) {
-                await supabaseClient.auth.signOut();
-                sessionUser = null;
-                const errorDiv = document.getElementById("login-error-message");
-                if (errorDiv) {
-                    errorDiv.innerText = "Acesso pendente: Sua conta está aguardando aprovação de um administrador.";
-                    errorDiv.style.display = "block";
-                    errorDiv.style.backgroundColor = "rgba(239, 68, 68, 0.12)";
-                    errorDiv.style.color = "var(--red-alert)";
-                }
-                document.getElementById("login-overlay").classList.add("active");
-                return;
-            }
-
-            document.getElementById("login-overlay").classList.remove("active");
-            document.getElementById("footer-username").innerText = sessionUser.email.split("@")[0].toUpperCase();
-            document.getElementById("footer-avatar").innerText = sessionUser.email.substring(0,2).toUpperCase();
-            
-            const menuUser = document.getElementById("menu-item-usuarios");
-            if (menuUser) {
-                menuUser.style.display = profile.is_admin ? "block" : "none";
-            }
-            
-            await fetchCloudData();
-            updateApplicationState();
-            initCharts();
-        } catch (e) {
-            console.error("Erro ao validar sessão:", e);
-            switchToDemoMode();
-        }
+        document.getElementById("login-overlay").classList.remove("active");
+        document.getElementById("footer-username").innerText = sessionUser.email.split("@")[0].toUpperCase();
+        document.getElementById("footer-avatar").innerText = sessionUser.email.substring(0,2).toUpperCase();
+        await fetchCloudData();
+        updateApplicationState();
+        initCharts();
     } else {
         document.getElementById("login-overlay").classList.add("active");
     }
@@ -195,61 +135,23 @@ async function checkActiveSession() {
 
 async function handleLogin(event) {
     event.preventDefault();
-    const email = document.getElementById("login-email").value.trim();
+    const email = document.getElementById("login-email").value;
     const password = document.getElementById("login-password").value;
     const errorDiv = document.getElementById("login-error-message");
-    if (errorDiv) {
-        errorDiv.style.display = "none";
-        errorDiv.style.backgroundColor = "";
-        errorDiv.style.color = "";
-    }
+    errorDiv.style.display = "none";
     if (isCloudActive) {
         const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
         if (error) {
-            if (errorDiv) {
-                errorDiv.innerText = `Erro de Autenticação: ${error.message}`;
-                errorDiv.style.display = "block";
-                errorDiv.style.backgroundColor = "rgba(239, 68, 68, 0.12)";
-                errorDiv.style.color = "var(--red-alert)";
-            }
+            errorDiv.innerText = `Erro de Autenticação: ${error.message}`;
+            errorDiv.style.display = "block";
         } else {
             sessionUser = data.user;
-            
-            try {
-                const { data: profile, error: pError } = await supabaseClient
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', sessionUser.id)
-                    .single();
-                    
-                if (pError || !profile || !profile.is_approved) {
-                    await supabaseClient.auth.signOut();
-                    sessionUser = null;
-                    if (errorDiv) {
-                        errorDiv.innerText = "Acesso pendente: Sua conta está aguardando aprovação de um administrador.";
-                        errorDiv.style.display = "block";
-                        errorDiv.style.backgroundColor = "rgba(239, 68, 68, 0.12)";
-                        errorDiv.style.color = "var(--red-alert)";
-                    }
-                    document.getElementById("login-overlay").classList.add("active");
-                    return;
-                }
-                
-                document.getElementById("login-overlay").classList.remove("active");
-                document.getElementById("footer-username").innerText = sessionUser.email.split("@")[0].toUpperCase();
-                document.getElementById("footer-avatar").innerText = sessionUser.email.substring(0,2).toUpperCase();
-                
-                const menuUser = document.getElementById("menu-item-usuarios");
-                if (menuUser) {
-                    menuUser.style.display = profile.is_admin ? "block" : "none";
-                }
-                
-                await fetchCloudData();
-                updateApplicationState();
-                initCharts();
-            } catch (e) {
-                console.error("Erro ao validar login:", e);
-            }
+            document.getElementById("login-overlay").classList.remove("active");
+            document.getElementById("footer-username").innerText = sessionUser.email.split("@")[0].toUpperCase();
+            document.getElementById("footer-avatar").innerText = sessionUser.email.substring(0,2).toUpperCase();
+            await fetchCloudData();
+            updateApplicationState();
+            initCharts();
         }
     } else {
         bypassLoginForDemo();
@@ -262,11 +164,6 @@ async function handleLogout() {
         sessionUser = null;
         document.getElementById("login-overlay").classList.add("active");
         document.getElementById("form-login").reset();
-        
-        const menuUser = document.getElementById("menu-item-usuarios");
-        if (menuUser) {
-            menuUser.style.display = "none";
-        }
     } else {
         window.location.reload();
     }
@@ -276,21 +173,7 @@ async function fetchCloudData() {
     if (!isCloudActive) return;
     try {
         const { data: est, error: errEst } = await supabaseClient.from('estoque').select('*').order('id', { ascending: false });
-        if (!errEst) estoque = est.map(c => ({ 
-            id: c.id, 
-            model: c.model, 
-            year: c.year, 
-            km: c.km, 
-            buyPrice: parseFloat(c.buy_price), 
-            sellPrice: parseFloat(c.sell_price), 
-            daysInStock: c.days_in_stock, 
-            status: c.status, 
-            type: c.type,
-            plate: c.plate || "",
-            color: c.color || "",
-            chassis: c.chassis || "",
-            image_url: c.image_url || null
-        }));
+        if (!errEst) estoque = est.map(c => ({ id: c.id, model: c.model, year: c.year, km: c.km, buyPrice: parseFloat(c.buy_price), sellPrice: parseFloat(c.sell_price), daysInStock: c.days_in_stock, status: c.status, type: c.type }));
 
         const { data: ven } = await supabaseClient.from('vendas').select('*').order('date', { ascending: false });
         if (ven) vendas = ven.map(v => ({ id: v.id, carId: v.car_id, client: v.client, sellPrice: parseFloat(v.sell_price), date: v.date, profit: parseFloat(v.profit), margin: parseFloat(v.margin), type: v.type }));
@@ -317,23 +200,6 @@ async function fetchCloudData() {
 // --------------------------------------------------------------------------
 // E. NAVEGAÇÃO
 // --------------------------------------------------------------------------
-function toggleSidebar() {
-    const sidebar = document.querySelector(".sidebar");
-    const toggleBtn = document.getElementById("sidebar-toggle-btn");
-    if (!sidebar) return;
-    sidebar.classList.toggle("collapsed");
-    
-    const isCollapsed = sidebar.classList.contains("collapsed");
-    localStorage.setItem("sidebar-collapsed", isCollapsed);
-    
-    if (toggleBtn) {
-        toggleBtn.innerHTML = isCollapsed 
-            ? `<i data-lucide="chevron-right"></i>` 
-            : `<i data-lucide="chevron-left"></i>`;
-    }
-    lucide.createIcons();
-}
-
 function switchTab(tabId) {
     document.querySelectorAll(".tab-pane").forEach(pane => pane.classList.remove("active"));
     document.querySelectorAll(".sidebar-menu .menu-item").forEach(item => item.classList.remove("active"));
@@ -347,14 +213,12 @@ function switchTab(tabId) {
         'vendas': { t: "Histórico de Fechamentos", s: "Registro financeiro de todos os veículos vendidos" },
         'financeiro': { t: "Fluxo de Caixa Operacional", s: "Demonstrativo financeiro simples de receitas e despesas" },
         'agenda': { t: "Agenda Operacional", s: "Planejamento logístico de visitas, cartório e oficinas" },
-        'excel': { t: "Guia Visual do Excel", s: "Configurações de cores, fontes e fórmulas para replicar este visual" },
-        'usuarios': { t: "Aprovações de Usuários", s: "Gerencie o acesso de novos operadores ao CRM" }
+        'excel': { t: "Guia Visual do Excel", s: "Configurações de cores, fontes e fórmulas para replicar este visual" }
     };
-    document.getElementById("current-tab-title").innerText = titleObj[tabId] ? titleObj[tabId].t : "Aba";
-    document.getElementById("current-tab-subtitle").innerText = titleObj[tabId] ? titleObj[tabId].s : "";
+    document.getElementById("current-tab-title").innerText = titleObj[tabId].t;
+    document.getElementById("current-tab-subtitle").innerText = titleObj[tabId].s;
     if (tabId === 'dashboard') setTimeout(() => initCharts(), 50);
     else if (tabId === 'financeiro') setTimeout(() => initFinanceChart(), 50);
-    else if (tabId === 'usuarios') loadProfiles();
     lucide.createIcons();
 }
 
@@ -439,11 +303,7 @@ function renderEstoqueTable(filterStatus = 'todos', searchQuery = '') {
     tableBody.innerHTML = "";
     let filteredCars = estoque.filter(car => {
         const query = searchQuery.toLowerCase();
-        const matchesSearch = car.model.toLowerCase().includes(query) || 
-                              car.year.toLowerCase().includes(query) ||
-                              (car.plate && car.plate.toLowerCase().includes(query)) ||
-                              (car.color && car.color.toLowerCase().includes(query)) ||
-                              (car.chassis && car.chassis.toLowerCase().includes(query));
+        const matchesSearch = car.model.toLowerCase().includes(query) || car.year.toLowerCase().includes(query);
         const matchesStatus = filterStatus === 'todos' || car.status === filterStatus;
         return matchesSearch && matchesStatus;
     });
@@ -453,28 +313,9 @@ function renderEstoqueTable(filterStatus = 'todos', searchQuery = '') {
         const isParado = car.daysInStock > 30 && car.status !== 'vendido';
         const daysClass = isParado ? "stock-days alert" : "stock-days";
         const daysContent = isParado ? `<i data-lucide="alert-triangle"></i> ${car.daysInStock} dias` : `${car.daysInStock} d`;
-        
-        // Mapeamento da foto real ou ícone default
-        const thumbContent = car.image_url 
-            ? `<img src="${car.image_url}" alt="${car.model}" style="width:100%; height:100%; object-fit:cover;">`
-            : `<i data-lucide="car"></i>`;
-
         const tr = document.createElement("tr");
         tr.innerHTML = `
-            <td>
-                <div class="car-cell">
-                    <div class="car-thumb">${thumbContent}</div>
-                    <div class="car-info">
-                        <h4>${car.model}</h4>
-                        <div class="car-info-sub">
-                            <span>ID: #${car.id}</span>
-                            ${car.plate ? `<span class="car-sub-item">Placa: ${car.plate}</span>` : ''}
-                            ${car.color ? `<span class="car-sub-item">Cor: ${car.color}</span>` : ''}
-                            ${car.chassis ? `<span class="car-sub-item">Chassi: ${car.chassis}</span>` : ''}
-                        </div>
-                    </div>
-                </div>
-            </td>
+            <td><div class="car-cell"><div class="car-thumb"><i data-lucide="car"></i></div><div class="car-info"><h4>${car.model}</h4><span>ID: #${car.id}</span></div></div></td>
             <td>${car.year}</td>
             <td style="font-family:monospace">${car.km.toLocaleString('pt-BR')} km</td>
             <td style="font-family:monospace">${formatCurrency(car.buyPrice)}</td>
@@ -513,50 +354,6 @@ function filterEstoqueStatus(status) {
     renderEstoqueTable(status, q);
 }
 
-// --------------------------------------------------------------------------
-// INTEGRACÃO PARA PREVIEW E UPLOAD DE FOTOS (SUPABASE STORAGE)
-// --------------------------------------------------------------------------
-function previewVehiclePhoto(input, previewId) {
-    const file = input.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const preview = document.getElementById(previewId);
-            if (preview) {
-                preview.innerHTML = `<img src="${e.target.result}" style="width:100%; height:100%; object-fit:cover;">`;
-            }
-        };
-        reader.readAsDataURL(file);
-    }
-}
-
-async function uploadVehiclePhoto(file) {
-    if (!isCloudActive) return null;
-    try {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `carro-${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
-        const filePath = fileName;
-
-        const { data, error } = await supabaseClient.storage
-            .from('veiculos')
-            .upload(filePath, file);
-
-        if (error) {
-            console.error("Erro no upload do storage: ", error);
-            return null;
-        }
-
-        const { data: publicUrlData } = supabaseClient.storage
-            .from('veiculos')
-            .getPublicUrl(filePath);
-
-        return publicUrlData.publicUrl;
-    } catch (e) {
-        console.error("Erro no upload de foto: ", e);
-        return null;
-    }
-}
-
 // Editar Veículo
 function openEditCarModal(carId) {
     const car = estoque.find(c => c.id === carId);
@@ -570,25 +367,11 @@ function openEditCarModal(carId) {
     document.getElementById("edit-car-type").value = car.type;
     document.getElementById("edit-car-status").value = car.status;
     document.getElementById("edit-car-days").value = car.daysInStock;
-    document.getElementById("edit-car-plate").value = car.plate || "";
-    document.getElementById("edit-car-color").value = car.color || "";
-    document.getElementById("edit-car-chassis").value = car.chassis || "";
-    
-    // Foto Preview
-    const preview = document.getElementById("edit-car-photo-preview");
-    if (car.image_url) {
-        preview.innerHTML = `<img src="${car.image_url}" style="width:100%; height:100%; object-fit:cover;">`;
-    } else {
-        preview.innerHTML = `<i data-lucide="image"></i>`;
-    }
-    
     document.getElementById("modal-edit-car").classList.add("active");
-    lucide.createIcons();
 }
 
 function closeEditCarModal() {
     document.getElementById("modal-edit-car").classList.remove("active");
-    document.getElementById("edit-car-photo-input").value = "";
 }
 
 async function saveEditCar(event) {
@@ -602,28 +385,15 @@ async function saveEditCar(event) {
     const type = document.getElementById("edit-car-type").value;
     const status = document.getElementById("edit-car-status").value;
     const daysInStock = parseInt(document.getElementById("edit-car-days").value) || 0;
-    const plate = document.getElementById("edit-car-plate").value.toUpperCase();
-    const color = document.getElementById("edit-car-color").value;
-    const chassis = document.getElementById("edit-car-chassis").value.toUpperCase();
-
-    const car = estoque.find(c => c.id === carId);
-    let imageUrl = car ? car.image_url : null;
-    
-    const photoInput = document.getElementById("edit-car-photo-input");
-    if (photoInput && photoInput.files.length > 0) {
-        imageUrl = await uploadVehiclePhoto(photoInput.files[0]);
-    }
 
     if (isCloudActive) {
         try {
-            await supabaseClient.from('estoque').update({ 
-                model, year, km, buy_price: buyPrice, sell_price: sellPrice, type, status, days_in_stock: daysInStock,
-                plate, color, chassis, image_url: imageUrl
-            }).eq('id', carId);
+            await supabaseClient.from('estoque').update({ model, year, km, buy_price: buyPrice, sell_price: sellPrice, type, status, days_in_stock: daysInStock }).eq('id', carId);
             await fetchCloudData();
         } catch (e) { console.error(e); }
     } else {
-        if (car) Object.assign(car, { model, year, km, buyPrice, sellPrice, type, status, daysInStock, plate, color, chassis, image_url: imageUrl });
+        const car = estoque.find(c => c.id === carId);
+        if (car) Object.assign(car, { model, year, km, buyPrice, sellPrice, type, status, daysInStock });
         persistLocalData();
     }
     updateApplicationState();
@@ -684,7 +454,7 @@ function renderKanban(searchQuery = '') {
                 <span class="${contactClass}"><i data-lucide="${contactIcon}"></i>${contactLabel}</span>
                 <div style="display:flex;gap:4px;">
                     <button class="lead-actions-btn" onclick="openEditLeadModal(${lead.id})" title="Editar"><i data-lucide="pencil"></i></button>
-                    <button class="lead-actions-btn" onclick="openTimelineModal(${lead.id})" title="Histórico / Timeline"><i data-lucide="message-square-plus"></i></button>
+                    <button class="lead-actions-btn" onclick="openTimelineModal(${lead.id})" title="Histórico"><i data-lucide="message-square-plus"></i></button>
                     <button class="lead-actions-btn" style="color:var(--red-alert)" onclick="deleteLeadConfirm(${lead.id})" title="Excluir"><i data-lucide="trash-2"></i></button>
                 </div>
             </div>`;
@@ -843,8 +613,7 @@ function renderVendasTable() {
             <td style="font-family:monospace">${v.margin.toFixed(1)}%</td>
             <td><span class="badge ${v.type}">${v.type === 'repasse' ? 'repasse' : 'varejo'}</span></td>
             <td style="text-align: center;">
-                <div style="display:flex;gap:6px;justify-content:center;align-items:center;">
-                    <button class="btn btn-secondary" style="padding:4px 8px;font-size:11px" onclick="generatePDFReceipt(${v.id})" title="Emitir Recibo em PDF"><i data-lucide="file-check" style="width:12px;height:12px;"></i> Recibo</button>
+                <div style="display:flex;gap:6px;justify-content:center;">
                     <button class="btn btn-secondary" style="padding:4px 8px;font-size:11px" onclick="openEditVendaModal(${v.id})" title="Editar"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button>
                     <button class="btn" style="padding:4px 8px;font-size:11px;background-color:rgba(239,68,68,0.15);color:var(--red-alert);border:1px solid rgba(239,68,68,0.2)" onclick="deleteVendaConfirm(${v.id})" title="Excluir"><i data-lucide="trash-2" style="width:12px;height:12px;"></i></button>
                 </div>
@@ -907,100 +676,6 @@ async function deleteVendaConfirm(vendaId) {
         persistLocalData();
     }
     updateApplicationState();
-}
-
-// --------------------------------------------------------------------------
-// EMISSÃO E VISUALIZAÇÃO DO RECIBO DE VENDA PDF (PRODUÇÃO IMPRESSÃO)
-// --------------------------------------------------------------------------
-function generatePDFReceipt(saleId) {
-    const v = vendas.find(sale => sale.id === saleId);
-    if (!v) return;
-    const car = estoque.find(c => c.id === v.carId) || { model: "Veículo de Giro", year: "N/A", km: 0, plate: "N/A", color: "N/A", chassis: "N/A" };
-    
-    const formattedDate = new Date(v.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    const formattedPrice = formatCurrency(v.sellPrice);
-    
-    const contentDiv = document.getElementById("receipt-print-content");
-    if (contentDiv) {
-        contentDiv.innerHTML = `
-            <div class="receipt-container">
-                <div class="receipt-header-print">
-                    <div>
-                        <h2>AutoDrive CRM</h2>
-                        <p>Gestão Automotiva Inteligente</p>
-                        <p style="font-size:11px; color:#6b7280; margin-top:4px;">Operação de Vendas - Revendedora Sem Loja Física</p>
-                    </div>
-                    <div style="text-align:right;">
-                        <div class="receipt-number">COMPROVANTE Nº #${v.id}</div>
-                        <p style="font-size:12px; color:#4b5563; margin-top:8px;">Data de Emissão: ${formattedDate}</p>
-                    </div>
-                </div>
-
-                <div class="receipt-grid-print">
-                    <div class="receipt-section-print">
-                        <div class="receipt-section-title-print">Vendedor / Emitente</div>
-                        <p><strong>AutoDrive CRM & Marcelo Motors</strong></p>
-                        <p>Canal de Venda: ${v.type.toUpperCase()}</p>
-                        <p>Status da Transação: CONCLUÍDA</p>
-                    </div>
-                    <div class="receipt-section-print">
-                        <div class="receipt-section-title-print">Comprador / Destinatário</div>
-                        <p>Nome: <strong>${v.client}</strong></p>
-                        <p>Tipo de Transação: Recebimento de Venda</p>
-                    </div>
-                </div>
-
-                <div class="receipt-section-title-print">Especificações do Veículo Vendido</div>
-                <table class="receipt-table-print">
-                    <thead>
-                        <tr>
-                            <th>Veículo / Modelo</th>
-                            <th>Ano</th>
-                            <th>Quilometragem</th>
-                            <th>Placa</th>
-                            <th>Cor</th>
-                            <th>Chassi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>${car.model}</strong></td>
-                            <td>${car.year}</td>
-                            <td>${car.km.toLocaleString('pt-BR')} km</td>
-                            <td>${car.plate || 'N/A'}</td>
-                            <td>${car.color || 'N/A'}</td>
-                            <td style="font-family:monospace; font-size:11px;">${car.chassis || 'N/A'}</td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <div class="receipt-total-print">
-                    <span>Valor Total Pago: </span>
-                    <strong style="color: var(--green-profit); font-size:22px;">${formattedPrice}</strong>
-                </div>
-
-                <div style="margin-top: 40px; font-size: 11px; color:#6b7280; line-height:1.4; border-top: 1px dashed #e5e7eb; padding-top:16px;">
-                    Declaro para os devidos fins que recebi a importância de <strong>${formattedPrice}</strong> referente à venda do veículo acima descrito, livre de quaisquer ônus fiscais ou multas até a presente data, outorgando plena, geral e irrevogável quitação.
-                </div>
-
-                <div class="receipt-signatures-print">
-                    <div class="sig-box">
-                        <div class="sig-line">Assinatura do Vendedor / Emitente</div>
-                    </div>
-                    <div class="sig-box">
-                        <div class="sig-line">Assinatura do Comprador</div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-    
-    document.getElementById("modal-receipt-print").classList.add("active");
-    lucide.createIcons();
-}
-
-function closeReceiptPrintModal() {
-    document.getElementById("modal-receipt-print").classList.remove("active");
 }
 
 // --------------------------------------------------------------------------
@@ -1109,7 +784,7 @@ function initFinanceChart() {
 }
 
 // --------------------------------------------------------------------------
-// L. AGENDA
+// L. AGENDA - RENDERIZAÇÃO + EDIÇÃO + EXCLUSÃO
 // --------------------------------------------------------------------------
 function renderAgendaTimeline() {
     const timeline = document.getElementById("agenda-timeline-body");
@@ -1246,7 +921,7 @@ function populateAgendaCarSelect(selectId = 'age-car') {
 }
 
 // --------------------------------------------------------------------------
-// N. MODAIS DE CRIAÇÃO (ATUALIZADOS COM NOVOS CAMPOS E UPLOADS)
+// N. MODAIS DE CRIAÇÃO (iguais ao original)
 // --------------------------------------------------------------------------
 function openAddLeadModal() { populateCarSelects('lead-interest'); document.getElementById("modal-add-lead").classList.add("active"); }
 function closeAddLeadModal() { document.getElementById("modal-add-lead").classList.remove("active"); document.getElementById("form-add-lead").reset(); }
@@ -1273,12 +948,7 @@ async function saveNewLead(event) {
 }
 
 function openAddCarModal() { document.getElementById("modal-add-car").classList.add("active"); }
-function closeAddCarModal() { 
-    document.getElementById("modal-add-car").classList.remove("active"); 
-    document.getElementById("form-add-car").reset(); 
-    document.getElementById("car-photo-preview").innerHTML = `<i data-lucide="image"></i>`;
-    lucide.createIcons();
-}
+function closeAddCarModal() { document.getElementById("modal-add-car").classList.remove("active"); document.getElementById("form-add-car").reset(); }
 
 async function saveNewCar(event) {
     event.preventDefault();
@@ -1290,27 +960,13 @@ async function saveNewCar(event) {
     const type = document.getElementById("car-type").value;
     const status = document.getElementById("car-status").value;
     const daysInStock = parseInt(document.getElementById("car-days").value) || 0;
-    const plate = document.getElementById("car-plate").value.toUpperCase();
-    const color = document.getElementById("car-color").value;
-    const chassis = document.getElementById("car-chassis").value.toUpperCase();
-    
-    // Foto Upload
-    const photoInput = document.getElementById("car-photo-input");
-    let imageUrl = null;
-    if (photoInput && photoInput.files.length > 0) {
-        imageUrl = await uploadVehiclePhoto(photoInput.files[0]);
-    }
-
     if (isCloudActive) {
         try {
-            await supabaseClient.from('estoque').insert({ 
-                model, year, km, buy_price: buyPrice, sell_price: sellPrice, type, status, days_in_stock: daysInStock,
-                plate, color, chassis, image_url: imageUrl
-            });
+            await supabaseClient.from('estoque').insert({ model, year, km, buy_price: buyPrice, sell_price: sellPrice, type, status, days_in_stock: daysInStock });
             await fetchCloudData();
         } catch (e) { console.error(e); }
     } else {
-        estoque.unshift({ id: estoque.length + 1, model, year, km, buyPrice, sellPrice, daysInStock, status, type, plate, color, chassis, image_url: imageUrl });
+        estoque.unshift({ id: estoque.length + 1, model, year, km, buyPrice, sellPrice, daysInStock, status, type });
         persistLocalData();
     }
     updateApplicationState();
@@ -1461,295 +1117,4 @@ function setLeadView(mode) {
     document.getElementById('leads-list-view').style.display = mode === 'lista' ? 'block' : 'none';
     document.getElementById('toggle-kanban').classList.toggle('active', mode === 'kanban');
     document.getElementById('toggle-lista').classList.toggle('active', mode === 'lista');
-}
-
-// --------------------------------------------------------------------------
-// SISTEMA DE EXPORTAÇÃO COMPATÍVEL COM EXCEL (CSV SEMICOLON + UTF-8 BOM)
-// --------------------------------------------------------------------------
-function downloadCSV(data, headers, fileName) {
-    let csvContent = "\uFEFF"; // UTF-8 BOM para garantir acentos e compatibilidade total com Excel em PT-BR
-    csvContent += headers.join(";") + "\n";
-    
-    data.forEach(row => {
-        csvContent += row.map(val => {
-            if (val === null || val === undefined) return "";
-            let formattedVal = String(val).replace(/;/g, ",").replace(/\n/g, " ");
-            return `"${formattedVal}"`;
-        }).join(";") + "\n";
-    });
-
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    if (link.download !== undefined) {
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", fileName);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-}
-
-function exportEstoqueToExcel() {
-    const headers = ["ID", "Modelo", "Ano", "KM", "Valor Compra", "Valor Venda", "Dias Estoque", "Tipo", "Status", "Placa", "Cor", "Chassi"];
-    const rows = estoque.map(c => [
-        c.id, c.model, c.year, c.km, c.buyPrice, c.sellPrice, c.daysInStock, c.type, c.status, c.plate || "", c.color || "", c.chassis || ""
-    ]);
-    downloadCSV(rows, headers, `autodrive_estoque_${new Date().toISOString().split('T')[0]}.csv`);
-}
-
-function exportLeadsToExcel() {
-    const headers = ["ID", "Nome Cliente", "Telefone", "ID Veiculo Interesse", "Origem", "Fase CRM", "Dias sem Contato", "Proxima Acao"];
-    const rows = leads.map(l => [
-        l.id, l.name, l.phone, l.interestCarId || "", l.origin, l.status, l.lastContactDays, l.nextAction || ""
-    ]);
-    downloadCSV(rows, headers, `autodrive_leads_${new Date().toISOString().split('T')[0]}.csv`);
-}
-
-function exportVendasToExcel() {
-    const headers = ["ID Venda", "Data", "Comprador", "ID Veiculo", "Valor Venda", "Lucro Real", "Margem (%)", "Canal"];
-    const rows = vendas.map(v => [
-        v.id, v.date, v.client, v.carId || "Giro", v.sellPrice, v.profit, v.margin.toFixed(1), v.type
-    ]);
-    downloadCSV(rows, headers, `autodrive_vendas_${new Date().toISOString().split('T')[0]}.csv`);
-}
-
-function exportDespesasToExcel() {
-    const headers = ["ID", "Data", "Descricao", "ID Veiculo", "Categoria", "Valor (R$)"];
-    const rows = despesas.map(d => [
-        d.id, d.date, d.desc, d.carId || "Geral", d.category, d.val
-    ]);
-    downloadCSV(rows, headers, `autodrive_despesas_${new Date().toISOString().split('T')[0]}.csv`);
-}
-
-// --------------------------------------------------------------------------
-// P. CADASTRO & APROVAÇÕES (ADMIN)
-// --------------------------------------------------------------------------
-function initializeSignupUI() {
-    const toggleSignupLink = document.getElementById("toggle-signup-link");
-    const toggleLoginLink = document.getElementById("toggle-login-link");
-    const formLogin = document.getElementById("form-login");
-    const formSignup = document.getElementById("form-signup");
-    const loginTitle = document.querySelector("#login-overlay h2");
-
-    if (toggleSignupLink && toggleLoginLink && formLogin && formSignup) {
-        toggleSignupLink.addEventListener("click", (e) => {
-            e.preventDefault();
-            formLogin.style.display = "none";
-            formSignup.style.display = "block";
-            if (loginTitle) loginTitle.innerText = "Solicitar Acesso";
-            const errorDiv = document.getElementById("login-error-message");
-            if (errorDiv) {
-                errorDiv.style.display = "none";
-            }
-        });
-        toggleLoginLink.addEventListener("click", (e) => {
-            e.preventDefault();
-            formSignup.style.display = "none";
-            formLogin.style.display = "block";
-            if (loginTitle) loginTitle.innerText = "Acessar AutoDrive CRM";
-            const errorDiv = document.getElementById("login-error-message");
-            if (errorDiv) {
-                errorDiv.style.display = "none";
-            }
-        });
-    }
-}
-
-async function handleSignup(event) {
-    event.preventDefault();
-    const email = document.getElementById("signup-email").value.trim();
-    const password = document.getElementById("signup-password").value;
-    const confirmPassword = document.getElementById("signup-confirm-password").value;
-    const errorDiv = document.getElementById("login-error-message");
-
-    if (errorDiv) {
-        errorDiv.style.display = "none";
-        errorDiv.style.backgroundColor = "";
-        errorDiv.style.color = "";
-    }
-
-    if (password.length < 6) {
-        if (errorDiv) {
-            errorDiv.innerText = "A senha deve ter no mínimo 6 caracteres.";
-            errorDiv.style.display = "block";
-            errorDiv.style.backgroundColor = "rgba(239, 68, 68, 0.12)";
-            errorDiv.style.color = "var(--red-alert)";
-        }
-        return;
-    }
-
-    if (password !== confirmPassword) {
-        if (errorDiv) {
-            errorDiv.innerText = "As senhas não coincidem.";
-            errorDiv.style.display = "block";
-            errorDiv.style.backgroundColor = "rgba(239, 68, 68, 0.12)";
-            errorDiv.style.color = "var(--red-alert)";
-        }
-        return;
-    }
-
-    if (isCloudActive) {
-        try {
-            const { data, error } = await supabaseClient.auth.signUp({
-                email,
-                password
-            });
-
-            if (error) {
-                if (errorDiv) {
-                    errorDiv.innerText = `Erro ao cadastrar: ${error.message}`;
-                    errorDiv.style.display = "block";
-                    errorDiv.style.backgroundColor = "rgba(239, 68, 68, 0.12)";
-                    errorDiv.style.color = "var(--red-alert)";
-                }
-            } else {
-                await supabaseClient.auth.signOut();
-                document.getElementById("form-signup").reset();
-                if (errorDiv) {
-                    errorDiv.innerText = "Cadastro enviado com sucesso! Aguarde a aprovação de um administrador para fazer login.";
-                    errorDiv.style.display = "block";
-                    errorDiv.style.backgroundColor = "rgba(16, 185, 129, 0.12)";
-                    errorDiv.style.color = "var(--green-profit)";
-                    errorDiv.style.borderColor = "rgba(16, 185, 129, 0.2)";
-                }
-                setTimeout(() => {
-                    const formLogin = document.getElementById("form-login");
-                    const formSignup = document.getElementById("form-signup");
-                    const loginTitle = document.querySelector("#login-overlay h2");
-                    if (formLogin && formSignup) {
-                        formSignup.style.display = "none";
-                        formLogin.style.display = "block";
-                        if (loginTitle) loginTitle.innerText = "Acessar AutoDrive CRM";
-                    }
-                }, 3000);
-            }
-        } catch (err) {
-            console.error(err);
-            if (errorDiv) {
-                errorDiv.innerText = "Ocorreu um erro no servidor. Tente novamente.";
-                errorDiv.style.display = "block";
-            }
-        }
-    } else {
-        if (errorDiv) {
-            errorDiv.innerText = "O cadastro de usuários não está disponível no modo de demonstração.";
-            errorDiv.style.display = "block";
-        }
-    }
-}
-
-let cachedProfiles = [];
-
-async function loadProfiles() {
-    if (!isCloudActive) return;
-    try {
-        const { data, error } = await supabaseClient
-            .from('profiles')
-            .select('*')
-            .order('created_at', { ascending: false });
-        if (error) throw error;
-        cachedProfiles = data;
-        renderProfilesTable(data);
-    } catch (err) {
-        console.error('Erro ao carregar perfis:', err);
-    }
-}
-
-function renderProfilesTable(profilesList) {
-    const tbody = document.getElementById("usuarios-table-body");
-    if (!tbody) return;
-    tbody.innerHTML = "";
-    
-    profilesList.forEach(profile => {
-        const tr = document.createElement("tr");
-        tr.style.borderBottom = "1px solid var(--border-color)";
-        
-        const dateStr = profile.created_at ? new Date(profile.created_at).toLocaleDateString('pt-BR') : '-';
-        
-        const statusText = profile.is_approved ? 'Aprovado' : 'Pendente';
-        const statusClass = profile.is_approved ? 'disponivel' : 'preparacao';
-        
-        const roleText = profile.is_admin ? 'Administrador' : 'Operador';
-        const roleClass = profile.is_admin ? 'repasse' : 'convencional';
-        
-        const btnApproveText = profile.is_approved ? 'Revogar' : 'Aprovar';
-        const btnAdminText = profile.is_admin ? 'Remover Admin' : 'Tornar Admin';
-        
-        let actionsHtml = '';
-        if (sessionUser && sessionUser.id !== profile.id) {
-            actionsHtml = `
-                <div style="display:flex; justify-content:center; gap:8px;">
-                    <button class="btn ${profile.is_approved ? 'btn-secondary' : 'btn-primary'}" style="padding:6px 12px; font-size:11px;" onclick="toggleUserApproval('${profile.id}', ${profile.is_approved})">
-                        ${btnApproveText}
-                    </button>
-                    <button class="btn btn-secondary" style="padding:6px 12px; font-size:11px;" onclick="toggleUserAdmin('${profile.id}', ${profile.is_admin})">
-                        ${btnAdminText}
-                    </button>
-                    <button class="btn btn-secondary" style="padding:6px 12px; font-size:11px; color:var(--red-alert); border-color:rgba(239, 68, 68, 0.2);" onclick="deleteUserAccount('${profile.id}')">
-                        Excluir
-                    </button>
-                </div>
-            `;
-        } else {
-            actionsHtml = `<div style="text-align:center; color:var(--text-muted); font-size:11px; font-style:italic;">Você (Atual)</div>`;
-        }
-
-        tr.innerHTML = `
-            <td style="padding:12px; color:var(--text-light); font-weight:500;">${profile.email}</td>
-            <td style="padding:12px; color:var(--text-muted);">${dateStr}</td>
-            <td style="padding:12px;"><span class="badge ${roleClass}">${roleText}</span></td>
-            <td style="padding:12px;"><span class="badge ${statusClass}">${statusText}</span></td>
-            <td style="padding:12px;">${actionsHtml}</td>
-        `;
-        tbody.appendChild(tr);
-    });
-}
-
-async function toggleUserApproval(profileId, currentStatus) {
-    if (!isCloudActive) return;
-    try {
-        const { error } = await supabaseClient
-            .from('profiles')
-            .update({ is_approved: !currentStatus })
-            .eq('id', profileId);
-        if (error) throw error;
-        await loadProfiles();
-    } catch (err) {
-        alert('Erro ao atualizar status do usuário: ' + err.message);
-    }
-}
-
-async function toggleUserAdmin(profileId, currentStatus) {
-    if (!isCloudActive) return;
-    try {
-        const { error } = await supabaseClient
-            .from('profiles')
-            .update({ is_admin: !currentStatus })
-            .eq('id', profileId);
-        if (error) throw error;
-        await loadProfiles();
-    } catch (err) {
-        alert('Erro ao atualizar nível de acesso: ' + err.message);
-    }
-}
-
-async function deleteUserAccount(profileId) {
-    if (!confirm("Excluir esta conta permanentemente? Esta ação não pode ser desfeita.")) return;
-    if (!isCloudActive) return;
-    try {
-        const { error } = await supabaseClient
-            .rpc('delete_user', { user_id: profileId });
-        if (error) throw error;
-        await loadProfiles();
-    } catch (err) {
-        alert('Erro ao excluir usuário: ' + err.message);
-    }
-}
-
-function filterUsuariosTable() {
-    const searchVal = document.getElementById("search-usuarios").value.toLowerCase();
-    const filtered = cachedProfiles.filter(p => p.email.toLowerCase().includes(searchVal));
-    renderProfilesTable(filtered);
 }

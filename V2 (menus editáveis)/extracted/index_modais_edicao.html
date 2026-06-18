@@ -1,0 +1,196 @@
+    <!-- ============================================================
+         NOVOS MODAIS DE EDIÇÃO — cole antes do </body> no index.html
+         ============================================================ -->
+
+    <!-- EDITAR VEÍCULO -->
+    <div class="modal-overlay" id="modal-edit-car">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>✏️ Editar Veículo</h3>
+                <button class="close-modal-btn" onclick="closeEditCarModal()"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-edit-car" onsubmit="saveEditCar(event)">
+                    <input type="hidden" id="edit-car-id">
+                    <div class="form-group">
+                        <label>Marca / Modelo</label>
+                        <input type="text" id="edit-car-brand-model" class="form-control" required>
+                    </div>
+                    <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div><label>Ano Modelo</label><input type="text" id="edit-car-year" class="form-control" required></div>
+                        <div><label>KM</label><input type="number" id="edit-car-km" class="form-control" required></div>
+                    </div>
+                    <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div><label>Valor de Compra (R$)</label><input type="number" id="edit-car-buy-val" class="form-control" required></div>
+                        <div><label>Valor de Venda (R$)</label><input type="number" id="edit-car-sell-val" class="form-control" required></div>
+                    </div>
+                    <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div><label>Tipo de Venda</label>
+                            <select id="edit-car-type" class="form-control">
+                                <option value="convencional">Convencional</option>
+                                <option value="repasse">Repasse</option>
+                            </select>
+                        </div>
+                        <div><label>Status</label>
+                            <select id="edit-car-status" class="form-control">
+                                <option value="disponivel">Disponível</option>
+                                <option value="preparacao">Em Preparação</option>
+                                <option value="reservado">Reservado</option>
+                                <option value="vendido">Vendido</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Dias em Estoque</label>
+                        <input type="number" id="edit-car-days" class="form-control" value="0">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeEditCarModal()">Cancelar</button>
+                <button class="btn btn-primary" type="submit" form="form-edit-car">Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- EDITAR LEAD -->
+    <div class="modal-overlay" id="modal-edit-lead">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>✏️ Editar Lead</h3>
+                <button class="close-modal-btn" onclick="closeEditLeadModal()"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-edit-lead" onsubmit="saveEditLead(event)">
+                    <input type="hidden" id="edit-lead-id">
+                    <div class="form-group"><label>Nome do Cliente</label><input type="text" id="edit-lead-name" class="form-control" required></div>
+                    <div class="form-group"><label>Telefone / WhatsApp</label><input type="text" id="edit-lead-phone" class="form-control" required></div>
+                    <div class="form-group"><label>Veículo de Interesse</label><select id="edit-lead-interest" class="form-control"></select></div>
+                    <div class="form-group"><label>Origem do Lead</label>
+                        <select id="edit-lead-origin" class="form-control">
+                            <option value="Instagram">Instagram</option>
+                            <option value="WhatsApp">WhatsApp Direto</option>
+                            <option value="Indicação">Indicação</option>
+                            <option value="OLX/Webmotors">OLX / Webmotors</option>
+                            <option value="Outros">Outros</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Fase no CRM</label>
+                        <select id="edit-lead-status" class="form-control">
+                            <option value="novo lead">Novo Lead</option>
+                            <option value="contato realizado">Contato Realizado</option>
+                            <option value="negociação">Negociação Ativa</option>
+                            <option value="sem resposta">Sem Resposta</option>
+                            <option value="fechado">Fechado (Ganho)</option>
+                            <option value="perdido">Perdido</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeEditLeadModal()">Cancelar</button>
+                <button class="btn btn-primary" type="submit" form="form-edit-lead">Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- EDITAR VENDA -->
+    <div class="modal-overlay" id="modal-edit-venda">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>✏️ Editar Venda</h3>
+                <button class="close-modal-btn" onclick="closeEditVendaModal()"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-edit-venda" onsubmit="saveEditVenda(event)">
+                    <input type="hidden" id="edit-venda-id">
+                    <div class="form-group"><label>Nome do Comprador</label><input type="text" id="edit-venda-client" class="form-control" required></div>
+                    <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div><label>Preço de Venda (R$)</label><input type="number" id="edit-venda-price" class="form-control" required></div>
+                        <div><label>Data da Venda</label><input type="date" id="edit-venda-date" class="form-control" required></div>
+                    </div>
+                    <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div><label>Lucro Real (R$)</label><input type="number" id="edit-venda-profit" class="form-control" required></div>
+                        <div><label>Margem (%)</label><input type="number" id="edit-venda-margin" class="form-control" step="0.1" required></div>
+                    </div>
+                    <div class="form-group"><label>Tipo de Venda</label>
+                        <select id="edit-venda-type" class="form-control">
+                            <option value="convencional">Convencional</option>
+                            <option value="repasse">Repasse</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeEditVendaModal()">Cancelar</button>
+                <button class="btn btn-primary" type="submit" form="form-edit-venda">Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- EDITAR DESPESA -->
+    <div class="modal-overlay" id="modal-edit-despesa">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>✏️ Editar Despesa</h3>
+                <button class="close-modal-btn" onclick="closeEditDespesaModal()"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-edit-despesa" onsubmit="saveEditDespesa(event)">
+                    <input type="hidden" id="edit-exp-id">
+                    <div class="form-group"><label>Descrição</label><input type="text" id="edit-exp-desc" class="form-control" required></div>
+                    <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div><label>Valor (R$)</label><input type="number" id="edit-exp-val" class="form-control" required></div>
+                        <div><label>Data</label><input type="date" id="edit-exp-date" class="form-control" required></div>
+                    </div>
+                    <div class="form-group"><label>Carro Relacionado</label><select id="edit-exp-car" class="form-control"></select></div>
+                    <div class="form-group"><label>Categoria</label>
+                        <select id="edit-exp-cat" class="form-control">
+                            <option value="Preparação">Estética & Preparação</option>
+                            <option value="Mecânica">Manutenção & Mecânica</option>
+                            <option value="Marketing">Marketing & Anúncios</option>
+                            <option value="Operacional">Operacional Geral</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeEditDespesaModal()">Cancelar</button>
+                <button class="btn btn-primary" type="submit" form="form-edit-despesa">Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- EDITAR AGENDA -->
+    <div class="modal-overlay" id="modal-edit-agenda">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>✏️ Editar Compromisso</h3>
+                <button class="close-modal-btn" onclick="closeEditAgendaModal()"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-edit-agenda" onsubmit="saveEditAgenda(event)">
+                    <input type="hidden" id="edit-age-id">
+                    <div class="form-group"><label>Título</label><input type="text" id="edit-age-title" class="form-control" required></div>
+                    <div class="form-group" style="display:grid;grid-template-columns:1.2fr 0.8fr;gap:12px;">
+                        <div><label>Data</label><input type="date" id="edit-age-date" class="form-control" required></div>
+                        <div><label>Horário</label><input type="time" id="edit-age-time" class="form-control" required></div>
+                    </div>
+                    <div class="form-group"><label>Carro Relacionado</label><select id="edit-age-car" class="form-control"></select></div>
+                    <div class="form-group"><label>Tipo de Atividade</label>
+                        <select id="edit-age-cat" class="form-control">
+                            <option value="visitas">Visita & Apresentação</option>
+                            <option value="entregas">Entrega de Carro Vendido</option>
+                            <option value="revisao">Revisão, Polimento ou Oficina</option>
+                            <option value="documentos">Vistoria ou Cartório</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Observações / Local</label><input type="text" id="edit-age-desc" class="form-control"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeEditAgendaModal()">Cancelar</button>
+                <button class="btn btn-primary" type="submit" form="form-edit-agenda">Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
