@@ -475,8 +475,9 @@ function renderEstoqueTable(filterStatus = 'todos', searchQuery = '') {
         const daysContent = isParado ? `<i data-lucide="alert-triangle"></i> ${car.daysInStock} dias` : `${car.daysInStock} d`;
         
         // Mapeamento da foto real ou ícone default
-        const thumbContent = car.image_url 
-            ? `<img src="${car.image_url}" alt="${car.model}" style="width:100%; height:100%; object-fit:cover;">`
+        const firstImageUrl = car.image_url ? car.image_url.split(',')[0].trim() : null;
+        const thumbContent = firstImageUrl 
+            ? `<img src="${firstImageUrl}" alt="${car.model}" style="width:100%; height:100%; object-fit:cover;">`
             : `<i data-lucide="car"></i>`;
 
         const tr = document.createElement("tr");
@@ -537,16 +538,40 @@ function filterEstoqueStatus(status) {
 // INTEGRACÃO PARA PREVIEW E UPLOAD DE FOTOS (SUPABASE STORAGE)
 // --------------------------------------------------------------------------
 function previewVehiclePhoto(input, previewId) {
-    const file = input.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const preview = document.getElementById(previewId);
-            if (preview) {
-                preview.innerHTML = `<img src="${e.target.result}" style="width:100%; height:100%; object-fit:cover;">`;
-            }
-        };
-        reader.readAsDataURL(file);
+    const preview = document.getElementById(previewId);
+    if (!preview) return;
+    
+    if (input.files && input.files.length > 0) {
+        preview.innerHTML = "";
+        preview.style.display = "flex";
+        preview.style.flexWrap = "wrap";
+        preview.style.gap = "4px";
+        preview.style.overflowY = "auto";
+        preview.style.padding = "4px";
+        preview.style.justifyContent = "center";
+        preview.style.alignItems = "center";
+        
+        Array.from(input.files).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.createElement("img");
+                img.src = e.target.result;
+                img.style.width = "40px";
+                img.style.height = "40px";
+                img.style.objectFit = "cover";
+                img.style.borderRadius = "4px";
+                preview.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        });
+    } else {
+        preview.innerHTML = `<i data-lucide="image"></i>`;
+        preview.style.display = "";
+        preview.style.flexWrap = "";
+        preview.style.gap = "";
+        preview.style.overflowY = "";
+        preview.style.padding = "";
+        lucide.createIcons();
     }
 }
 
@@ -577,6 +602,16 @@ async function uploadVehiclePhoto(file) {
     }
 }
 
+async function uploadMultipleVehiclePhotos(files) {
+    if (!isCloudActive || !files || files.length === 0) return null;
+    let urls = [];
+    for (let file of files) {
+        const url = await uploadVehiclePhoto(file);
+        if (url) urls.push(url);
+    }
+    return urls.length > 0 ? urls.join(',') : null;
+}
+
 // Editar Veículo
 function openEditCarModal(carId) {
     const car = estoque.find(c => c.id === carId);
@@ -597,9 +632,25 @@ function openEditCarModal(carId) {
     // Foto Preview
     const preview = document.getElementById("edit-car-photo-preview");
     if (car.image_url) {
-        preview.innerHTML = `<img src="${car.image_url}" style="width:100%; height:100%; object-fit:cover;">`;
+        const urls = car.image_url.split(',');
+        preview.innerHTML = "";
+        preview.style.display = "flex";
+        preview.style.flexWrap = "wrap";
+        preview.style.gap = "4px";
+        preview.style.overflowY = "auto";
+        preview.style.padding = "4px";
+        preview.style.justifyContent = "center";
+        preview.style.alignItems = "center";
+        urls.forEach(url => {
+            preview.innerHTML += `<img src="${url.trim()}" style="width:40px; height:40px; object-fit:cover; border-radius:4px;">`;
+        });
     } else {
         preview.innerHTML = `<i data-lucide="image"></i>`;
+        preview.style.display = "";
+        preview.style.flexWrap = "";
+        preview.style.gap = "";
+        preview.style.overflowY = "";
+        preview.style.padding = "";
     }
     
     document.getElementById("modal-edit-car").classList.add("active");
@@ -631,7 +682,10 @@ async function saveEditCar(event) {
     
     const photoInput = document.getElementById("edit-car-photo-input");
     if (photoInput && photoInput.files.length > 0) {
-        imageUrl = await uploadVehiclePhoto(photoInput.files[0]);
+        const newUrls = await uploadMultipleVehiclePhotos(photoInput.files);
+        if (newUrls) {
+            imageUrl = imageUrl ? imageUrl + ',' + newUrls : newUrls;
+        }
     }
 
     if (isCloudActive) {
@@ -1345,7 +1399,15 @@ function openAddCarModal() { document.getElementById("modal-add-car").classList.
 function closeAddCarModal() { 
     document.getElementById("modal-add-car").classList.remove("active"); 
     document.getElementById("form-add-car").reset(); 
-    document.getElementById("car-photo-preview").innerHTML = `<i data-lucide="image"></i>`;
+    const preview = document.getElementById("car-photo-preview");
+    if (preview) {
+        preview.innerHTML = `<i data-lucide="image"></i>`;
+        preview.style.display = "";
+        preview.style.flexWrap = "";
+        preview.style.gap = "";
+        preview.style.overflowY = "";
+        preview.style.padding = "";
+    }
     lucide.createIcons();
 }
 
@@ -1367,7 +1429,7 @@ async function saveNewCar(event) {
     const photoInput = document.getElementById("car-photo-input");
     let imageUrl = null;
     if (photoInput && photoInput.files.length > 0) {
-        imageUrl = await uploadVehiclePhoto(photoInput.files[0]);
+        imageUrl = await uploadMultipleVehiclePhotos(photoInput.files);
     }
 
     if (isCloudActive) {
