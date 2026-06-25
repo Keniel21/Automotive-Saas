@@ -300,7 +300,15 @@
                     <i data-lucide="search"></i>
                     <input type="text" class="search-input" id="search-estoque" placeholder="Buscar por modelo, placa, cor, chassi..." oninput="filterEstoqueTable()">
                 </div>
-                <div style="display:flex; gap:12px; align-items:center;">
+                <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+                    <div class="view-toggle" style="margin-right: 8px;">
+                        <button class="view-toggle-btn active" id="toggle-estoque-lista" onclick="setEstoqueView('lista')" title="Visualização em Lista">
+                            <i data-lucide="list"></i>
+                        </button>
+                        <button class="view-toggle-btn" id="toggle-estoque-grade" onclick="setEstoqueView('grade')" title="Visualização em Grade">
+                            <i data-lucide="grid"></i>
+                        </button>
+                    </div>
                     <div class="filter-group" id="filter-estoque-group">
                         <button class="filter-btn active" onclick="filterEstoqueStatus('todos')">Todos</button>
                         <button class="filter-btn" onclick="filterEstoqueStatus('disponivel')">Disponíveis</button>
@@ -314,7 +322,7 @@
                 </div>
             </div>
 
-            <div class="table-responsive">
+            <div class="table-responsive" id="estoque-list-view">
                 <table class="saas-table" id="estoque-table">
                     <thead>
                         <tr>
@@ -334,6 +342,10 @@
                         <!-- Gerado Dinamicamente por app.js -->
                     </tbody>
                 </table>
+            </div>
+
+            <div id="estoque-grid-view" class="estoque-grid" style="display:none;">
+                <!-- Gerado Dinamicamente por app.js -->
             </div>
         </section>
 
@@ -646,10 +658,10 @@
                 <div class="agenda-sidebar">
                     <div class="mini-calendar">
                         <div class="mini-cal-header">
-                            <span>Maio de 2026</span>
+                            <span id="agenda-cal-month-year" style="text-transform: capitalize;">Maio de 2026</span>
                             <div style="display:flex; gap: 8px;">
-                                <i data-lucide="chevron-left" style="cursor:pointer; width:16px;"></i>
-                                <i data-lucide="chevron-right" style="cursor:pointer; width:16px;"></i>
+                                <div style="cursor:pointer; display:flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:4px;" onclick="calendarPrevMonth()" onmouseover="this.style.backgroundColor='var(--border-subtle)'" onmouseout="this.style.backgroundColor='transparent'"><i data-lucide="chevron-left" style="width:16px;"></i></div>
+                                <div style="cursor:pointer; display:flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:4px;" onclick="calendarNextMonth()" onmouseover="this.style.backgroundColor='var(--border-subtle)'" onmouseout="this.style.backgroundColor='transparent'"><i data-lucide="chevron-right" style="width:16px;"></i></div>
                             </div>
                         </div>
                         <div class="mini-cal-grid">
@@ -660,43 +672,9 @@
                             <span class="cal-day-label">Q</span>
                             <span class="cal-day-label">S</span>
                             <span class="cal-day-label">S</span>
-                            
-                            <!-- Dias mockados -->
-                            <span class="cal-day-num text-muted">26</span>
-                            <span class="cal-day-num text-muted">27</span>
-                            <span class="cal-day-num text-muted">28</span>
-                            <span class="cal-day-num text-muted">29</span>
-                            <span class="cal-day-num text-muted">30</span>
-                            <span class="cal-day-num">1</span>
-                            <span class="cal-day-num">2</span>
-                            <span class="cal-day-num">3</span>
-                            <span class="cal-day-num">4</span>
-                            <span class="cal-day-num">5</span>
-                            <span class="cal-day-num">6</span>
-                            <span class="cal-day-num">7</span>
-                            <span class="cal-day-num">8</span>
-                            <span class="cal-day-num">9</span>
-                            <span class="cal-day-num">10</span>
-                            <span class="cal-day-num">11</span>
-                            <span class="cal-day-num">12</span>
-                            <span class="cal-day-num">13</span>
-                            <span class="cal-day-num">14</span>
-                            <span class="cal-day-num">15</span>
-                            <span class="cal-day-num">16</span>
-                            <span class="cal-day-num">17</span>
-                            <span class="cal-day-num">18</span>
-                            <span class="cal-day-num">19</span>
-                            <span class="cal-day-num has-event">20</span>
-                            <span class="cal-day-num has-event">21</span>
-                            <span class="cal-day-num active has-event">22</span>
-                            <span class="cal-day-num has-event">23</span>
-                            <span class="cal-day-num">24</span>
-                            <span class="cal-day-num">25</span>
-                            <span class="cal-day-num">26</span>
-                            <span class="cal-day-num">27</span>
-                            <span class="cal-day-num">28</span>
-                            <span class="cal-day-num">29</span>
-                            <span class="cal-day-num">30</span>
+                            <div id="agenda-cal-days" style="display: contents;">
+                                <!-- Dias gerados pelo JS -->
+                            </div>
                         </div>
                     </div>
 
@@ -725,7 +703,7 @@
                 <div class="agenda-timeline">
                     <div class="panel-header" style="margin-bottom:0px; padding-bottom: 10px; border-bottom: 1px solid var(--border-subtle)">
                         <div class="panel-title">
-                            <h3>Compromissos Agendados (Hoje)</h3>
+                            <h3 id="agenda-timeline-title">Compromissos Agendados</h3>
                             <p>Rotina operacional do operador sem ponto físico</p>
                         </div>
                         <button class="btn btn-primary btn-sm" onclick="openAddAgendaModal()">
@@ -1241,60 +1219,74 @@
          NOVOS MODAIS DE EDIÇÃO INTEGRADOS (VERSÃO 2.0)
          ============================================================ -->
 
-    <!-- EDITAR VEÍCULO -->
+    <!-- VISUALIZAR E EDITAR VEÍCULO INTEGRADO -->
     <div class="modal-overlay" id="modal-edit-car">
-        <div class="modal-content">
+        <div class="modal-content" style="width: 750px; max-width: 95%;">
             <div class="modal-header">
-                <h3>✏️ Editar Veículo</h3>
+                <h3>Detalhes e Edição do Veículo</h3>
                 <button class="close-modal-btn" onclick="closeEditCarModal()"><i data-lucide="x"></i></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body" style="padding: 24px;">
                 <form id="form-edit-car" onsubmit="saveEditCar(event)">
                     <input type="hidden" id="edit-car-id">
                     
-                    <!-- Foto Edit Wrapper -->
-                    <div class="form-group">
-                        <label>Foto do Veículo</label>
-                        <div class="photo-upload-wrapper">
-                            <div class="photo-preview-circle" id="edit-car-photo-preview">
-                                <i data-lucide="image"></i>
+                    <!-- Galeria Editável -->
+                    <div id="edit-car-gallery" style="margin-bottom: 24px;">
+                        <div style="width: 100%; height: 300px; background-color: var(--panel-bg); border-radius: var(--radius-lg); overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-subtle); position: relative;">
+                            <img id="edit-car-main-img" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                            <i id="edit-car-no-img-icon" data-lucide="car" style="width: 64px; height: 64px; color: var(--border-subtle);"></i>
+                            <div style="position: absolute; bottom: 12px; right: 12px;">
+                                <label for="edit-car-photo-input" class="btn btn-primary" style="padding: 8px 14px; cursor: pointer; display: flex; gap: 8px; align-items: center; font-size: 12px; border-radius: var(--radius-md); box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+                                    <i data-lucide="plus"></i> Adicionar Fotos
+                                </label>
+                                <input type="file" id="edit-car-photo-input" accept="image/*" multiple style="display:none;" onchange="previewNewEditPhotos(this)">
                             </div>
-                            <label for="edit-car-photo-input" class="photo-upload-btn-label">
-                                <i data-lucide="upload-cloud"></i>
-                                <span>Alterar Imagem</span>
-                            </label>
-                            <input type="file" id="edit-car-photo-input" accept="image/*" multiple style="display:none;" onchange="previewVehiclePhoto(this, 'edit-car-photo-preview')">
                         </div>
+                        <div id="edit-car-thumbnails" style="display: flex; gap: 10px; margin-top: 12px; overflow-x: auto; padding-bottom: 8px;">
+                            <!-- Thumbnails geradas pelo JS -->
+                        </div>
+                        <input type="hidden" id="edit-car-current-images">
                     </div>
 
+                    <!-- Informações Básicas -->
+                    <h4 style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; border-bottom: 1px solid var(--border-subtle); padding-bottom: 6px;">Informações Principais</h4>
                     <div class="form-group">
                         <label>Marca / Modelo</label>
-                        <input type="text" id="edit-car-brand-model" class="form-control" required>
+                        <input type="text" id="edit-car-brand-model" class="form-control" required style="font-size: 15px; font-weight: 600;">
                     </div>
-                    <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    
+                    <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
                         <div><label>Ano Modelo</label><input type="text" id="edit-car-year" class="form-control" required></div>
                         <div><label>KM</label><input type="number" id="edit-car-km" class="form-control" required></div>
+                        <div><label>Dias em Estoque</label><input type="number" id="edit-car-days" class="form-control"></div>
                     </div>
-                    <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                        <div><label>Valor de Compra (R$)</label><input type="number" id="edit-car-buy-val" class="form-control" required></div>
-                        <div><label>Valor de Venda (R$)</label><input type="number" id="edit-car-sell-val" class="form-control" required></div>
-                    </div>
-                    <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    
+                    <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
                         <div><label>Placa</label><input type="text" id="edit-car-plate" class="form-control" style="text-transform:uppercase;"></div>
                         <div><label>Cor</label><input type="text" id="edit-car-color" class="form-control"></div>
+                        <div><label>Número do Chassi</label><input type="text" id="edit-car-chassis" class="form-control" style="text-transform:uppercase;"></div>
                     </div>
-                    <div class="form-group">
-                        <label>Número do Chassi</label>
-                        <input type="text" id="edit-car-chassis" class="form-control" style="text-transform:uppercase;">
+
+                    <!-- Financeiro e Status -->
+                    <h4 style="font-size: 13px; color: var(--text-muted); margin-top: 24px; margin-bottom: 12px; text-transform: uppercase; border-bottom: 1px solid var(--border-subtle); padding-bottom: 6px;">Financeiro e Status</h4>
+                    <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                        <div>
+                            <label>Valor de Compra (Custo Real R$)</label>
+                            <input type="number" id="edit-car-buy-val" class="form-control" style="font-weight: 600; color: var(--text-light);" required>
+                        </div>
+                        <div>
+                            <label>Valor Anunciado (Venda R$)</label>
+                            <input type="number" id="edit-car-sell-val" class="form-control" style="font-weight: 600; color: var(--green-profit);" required>
+                        </div>
                     </div>
-                    <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
                         <div><label>Tipo de Venda</label>
                             <select id="edit-car-type" class="form-control">
                                 <option value="convencional">Convencional</option>
                                 <option value="repasse">Repasse</option>
                             </select>
                         </div>
-                        <div><label>Status</label>
+                        <div><label>Status do Veículo</label>
                             <select id="edit-car-status" class="form-control">
                                 <option value="disponivel">Disponível</option>
                                 <option value="preparacao">Em Preparação</option>
@@ -1303,15 +1295,11 @@
                             </select>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label>Dias em Estoque</label>
-                        <input type="number" id="edit-car-days" class="form-control">
-                    </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeEditCarModal()">Cancelar</button>
-                <button class="btn btn-primary" type="submit" form="form-edit-car">Salvar Alterações</button>
+                <button class="btn btn-primary" type="submit" form="form-edit-car"><i data-lucide="save"></i> Salvar Alterações</button>
             </div>
         </div>
     </div>

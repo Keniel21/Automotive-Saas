@@ -37,6 +37,10 @@ let vendas = [
     { id: 3, carId: null, client: "Gustavo Franco", sellPrice: 52000, date: "2026-05-02", profit: 6000, margin: 11.5, type: "convencional" }
 ];
 
+// Calendário State
+let currentCalendarDate = new Date();
+let selectedAgendaDate = new Date();
+
 let despesas = [
     { id: 1, desc: "Polimento Jeep Compass", carId: 1, date: "2026-05-12", val: 450, category: "Preparação" },
     { id: 2, desc: "Higienização interna Honda Civic", carId: 3, date: "2026-05-15", val: 250, category: "Preparação" },
@@ -90,6 +94,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Inicializa listeners do formulário de cadastro
     initializeSignupUI();
+
+    // Global functions handle calendar navigation via onclick attributes in HTML
 
     if (SUPABASE_URL !== "SUA_SUPABASE_URL_AQUI" && SUPABASE_ANON_KEY !== "SUA_SUPABASE_KEY_AQUI") {
         try {
@@ -367,8 +373,11 @@ function updateApplicationState() {
     renderLeadsList();
     renderVendasTable();
     renderFinanceiro();
+    renderCalendar();
     renderAgendaTimeline();
 }
+
+
 
 // --------------------------------------------------------------------------
 // F. KPIs
@@ -453,10 +462,22 @@ function initCharts() {
 // --------------------------------------------------------------------------
 // H. ESTOQUE - RENDERIZAÇÃO + EDIÇÃO + EXCLUSÃO
 // --------------------------------------------------------------------------
+let estoqueViewMode = 'lista';
+function setEstoqueView(mode) {
+    estoqueViewMode = mode;
+    document.getElementById('estoque-list-view').style.display = mode === 'lista' ? 'block' : 'none';
+    document.getElementById('estoque-grid-view').style.display = mode === 'grade' ? 'grid' : 'none';
+    document.getElementById('toggle-estoque-lista').classList.toggle('active', mode === 'lista');
+    document.getElementById('toggle-estoque-grade').classList.toggle('active', mode === 'grade');
+}
+
 function renderEstoqueTable(filterStatus = 'todos', searchQuery = '') {
     const tableBody = document.getElementById("estoque-table-body");
-    if (!tableBody) return;
+    const gridView = document.getElementById("estoque-grid-view");
+    if (!tableBody || !gridView) return;
+    
     tableBody.innerHTML = "";
+    gridView.innerHTML = "";
     let filteredCars = estoque.filter(car => {
         const query = searchQuery.toLowerCase();
         const matchesSearch = car.model.toLowerCase().includes(query) || 
@@ -481,6 +502,11 @@ function renderEstoqueTable(filterStatus = 'todos', searchQuery = '') {
             : `<i data-lucide="car"></i>`;
 
         const tr = document.createElement("tr");
+        tr.style.cursor = "pointer";
+        tr.onclick = (e) => {
+            if(e.target.closest('button')) return;
+            openEditCarModal(car.id);
+        };
         tr.innerHTML = `
             <td>
                 <div class="car-cell">
@@ -512,6 +538,55 @@ function renderEstoqueTable(filterStatus = 'todos', searchQuery = '') {
                 </div>
             </td>`;
         tableBody.appendChild(tr);
+
+        // Criação do Card da Grade
+        const gridThumbContent = firstImageUrl 
+            ? `<img src="${firstImageUrl}" alt="${car.model}">`
+            : `<i data-lucide="car"></i>`;
+
+        const badgeClass = isParado ? "estoque-card-badge" : "estoque-card-badge green";
+        const badgeIcon = isParado ? `<i data-lucide="clock"></i>` : `<i data-lucide="check-circle-2"></i>`;
+        
+        let sellBtn = car.status !== 'vendido' ? `<button class="btn btn-success" style="padding:4px;" onclick="openSellCarModal(${car.id})" title="Vender"><i data-lucide="badge-dollar-sign" style="width:14px;height:14px;"></i></button>` : '';
+
+        const card = document.createElement("div");
+        card.className = "estoque-card";
+        card.style.cursor = "pointer";
+        card.onclick = (e) => {
+            if(e.target.closest('.estoque-card-actions')) return;
+            openEditCarModal(car.id);
+        };
+        card.innerHTML = `
+            <div class="estoque-card-img-wrapper">
+                ${gridThumbContent}
+                <div class="${badgeClass}">${badgeIcon} ${car.daysInStock}d</div>
+                <div class="estoque-card-actions">
+                    <button class="btn btn-secondary" style="padding:4px;" onclick="openEditCarModal(${car.id})" title="Editar"><i data-lucide="pencil" style="width:14px;height:14px;"></i></button>
+                    ${sellBtn}
+                </div>
+            </div>
+            <div class="estoque-card-body">
+                <div class="estoque-card-title">${car.model}</div>
+                <div class="estoque-card-subtitle">${car.year} • ${car.km.toLocaleString('pt-BR')} km • ${car.plate || 'S/P'}</div>
+                
+                <div class="estoque-card-prices">
+                    <div class="estoque-card-price-col">
+                        <div class="estoque-card-price-label">Anunciado</div>
+                        <div class="estoque-card-price-val">${formatCurrency(car.sellPrice)}</div>
+                    </div>
+                    <div class="estoque-card-price-col right">
+                        <div class="estoque-card-price-label">Custo</div>
+                        <div class="estoque-card-price-val dimmed">${formatCurrency(car.buyPrice)}</div>
+                    </div>
+                </div>
+                
+                <div class="estoque-card-footer">
+                    <span class="badge ${car.status}">${car.status}</span>
+                    <div class="estoque-card-footer-val">$ ${formatCurrency(lucroEst)}</div>
+                </div>
+            </div>
+        `;
+        gridView.appendChild(card);
     });
     lucide.createIcons();
 }
@@ -612,7 +687,7 @@ async function uploadMultipleVehiclePhotos(files) {
     return urls.length > 0 ? urls.join(',') : null;
 }
 
-// Editar Veículo
+// Visualizar e Editar Veículo (Integrado)
 function openEditCarModal(carId) {
     const car = estoque.find(c => c.id === carId);
     if (!car) return;
@@ -624,37 +699,132 @@ function openEditCarModal(carId) {
     document.getElementById("edit-car-sell-val").value = car.sellPrice;
     document.getElementById("edit-car-type").value = car.type;
     document.getElementById("edit-car-status").value = car.status;
-    document.getElementById("edit-car-days").value = car.daysInStock;
+    document.getElementById("edit-car-days").value = car.daysInStock || 0;
     document.getElementById("edit-car-plate").value = car.plate || "";
     document.getElementById("edit-car-color").value = car.color || "";
     document.getElementById("edit-car-chassis").value = car.chassis || "";
-    
-    // Foto Preview
-    const preview = document.getElementById("edit-car-photo-preview");
-    if (car.image_url) {
-        const urls = car.image_url.split(',');
-        preview.innerHTML = "";
-        preview.style.display = "flex";
-        preview.style.flexWrap = "wrap";
-        preview.style.gap = "4px";
-        preview.style.overflowY = "auto";
-        preview.style.padding = "4px";
-        preview.style.justifyContent = "center";
-        preview.style.alignItems = "center";
-        urls.forEach(url => {
-            preview.innerHTML += `<img src="${url.trim()}" style="width:40px; height:40px; object-fit:cover; border-radius:4px;">`;
-        });
-    } else {
-        preview.innerHTML = `<i data-lucide="image"></i>`;
-        preview.style.display = "";
-        preview.style.flexWrap = "";
-        preview.style.gap = "";
-        preview.style.overflowY = "";
-        preview.style.padding = "";
-    }
-    
+
+    // Load initial images
+    document.getElementById("edit-car-current-images").value = car.image_url || "";
+    renderEditGallery();
+
     document.getElementById("modal-edit-car").classList.add("active");
     lucide.createIcons();
+}
+
+function renderEditGallery() {
+    const currentUrlsStr = document.getElementById("edit-car-current-images").value;
+    const mainImg = document.getElementById("edit-car-main-img");
+    const noImgIcon = document.getElementById("edit-car-no-img-icon");
+    const thumbnailsContainer = document.getElementById("edit-car-thumbnails");
+    
+    thumbnailsContainer.innerHTML = "";
+
+    if (currentUrlsStr && currentUrlsStr.trim() !== "") {
+        const urls = currentUrlsStr.split(',').filter(u => u.trim() !== "");
+        if (urls.length > 0) {
+            mainImg.src = urls[0].trim();
+            mainImg.style.display = "block";
+            noImgIcon.style.display = "none";
+
+            urls.forEach((url, idx) => {
+                const thumbUrl = url.trim();
+                const thumbWrapper = document.createElement("div");
+                thumbWrapper.style.position = "relative";
+                thumbWrapper.style.display = "inline-block";
+                thumbWrapper.style.flexShrink = "0";
+                
+                const thumbImg = document.createElement("img");
+                thumbImg.src = thumbUrl;
+                thumbImg.style.width = "64px";
+                thumbImg.style.height = "64px";
+                thumbImg.style.objectFit = "cover";
+                thumbImg.style.borderRadius = "var(--radius-sm)";
+                thumbImg.style.cursor = "pointer";
+                thumbImg.style.border = idx === 0 ? "2px solid var(--blue-primary)" : "2px solid transparent";
+                
+                thumbImg.onclick = () => {
+                    mainImg.src = thumbUrl;
+                    Array.from(thumbnailsContainer.querySelectorAll('img')).forEach(img => img.style.border = "2px solid transparent");
+                    thumbImg.style.border = "2px solid var(--blue-primary)";
+                };
+
+                const delBtn = document.createElement("button");
+                delBtn.innerHTML = `<i data-lucide="x" style="width:14px;height:14px;"></i>`;
+                delBtn.style.position = "absolute";
+                delBtn.style.top = "-4px";
+                delBtn.style.right = "-4px";
+                delBtn.style.background = "var(--red-alert)";
+                delBtn.style.color = "white";
+                delBtn.style.border = "none";
+                delBtn.style.borderRadius = "50%";
+                delBtn.style.width = "20px";
+                delBtn.style.height = "20px";
+                delBtn.style.display = "flex";
+                delBtn.style.alignItems = "center";
+                delBtn.style.justifyContent = "center";
+                delBtn.style.cursor = "pointer";
+                delBtn.style.padding = "2px";
+                delBtn.style.boxShadow = "0 2px 4px rgba(0,0,0,0.3)";
+                delBtn.title = "Excluir esta imagem";
+                delBtn.onclick = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    removeEditPhoto(idx);
+                };
+                
+                thumbWrapper.appendChild(thumbImg);
+                thumbWrapper.appendChild(delBtn);
+                thumbnailsContainer.appendChild(thumbWrapper);
+            });
+        } else {
+            mainImg.style.display = "none";
+            noImgIcon.style.display = "block";
+        }
+    } else {
+        mainImg.style.display = "none";
+        noImgIcon.style.display = "block";
+    }
+    lucide.createIcons();
+}
+
+function removeEditPhoto(index) {
+    const currentUrlsStr = document.getElementById("edit-car-current-images").value;
+    if (currentUrlsStr) {
+        const urls = currentUrlsStr.split(',').filter(u => u.trim() !== "");
+        urls.splice(index, 1);
+        document.getElementById("edit-car-current-images").value = urls.join(',');
+        renderEditGallery();
+    }
+}
+
+function previewNewEditPhotos(input) {
+    const thumbnailsContainer = document.getElementById("edit-car-thumbnails");
+    if (input.files && input.files.length > 0) {
+        Array.from(input.files).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const thumbWrapper = document.createElement("div");
+                thumbWrapper.style.position = "relative";
+                thumbWrapper.style.display = "inline-block";
+                thumbWrapper.style.flexShrink = "0";
+                thumbWrapper.style.opacity = "0.8";
+                
+                const thumbImg = document.createElement("img");
+                thumbImg.src = e.target.result;
+                thumbImg.style.width = "64px";
+                thumbImg.style.height = "64px";
+                thumbImg.style.objectFit = "cover";
+                thumbImg.style.borderRadius = "var(--radius-sm)";
+                thumbImg.style.border = "2px dashed var(--yellow-warning)";
+                thumbImg.title = "Pendente para salvar";
+                
+                thumbWrapper.appendChild(thumbImg);
+                thumbnailsContainer.appendChild(thumbWrapper);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
 }
 
 function closeEditCarModal() {
@@ -678,13 +848,13 @@ async function saveEditCar(event) {
     const chassis = document.getElementById("edit-car-chassis").value.toUpperCase();
 
     const car = estoque.find(c => c.id === carId);
-    let imageUrl = car ? car.image_url : null;
+    let imageUrl = document.getElementById("edit-car-current-images").value;
     
     const photoInput = document.getElementById("edit-car-photo-input");
     if (photoInput && photoInput.files.length > 0) {
         const newUrls = await uploadMultipleVehiclePhotos(photoInput.files);
         if (newUrls) {
-            imageUrl = imageUrl ? imageUrl + ',' + newUrls : newUrls;
+            imageUrl = imageUrl && imageUrl.trim() !== "" ? imageUrl + ',' + newUrls : newUrls;
         }
     }
 
@@ -1234,11 +1404,102 @@ function initFinanceChart() {
 // --------------------------------------------------------------------------
 // L. AGENDA
 // --------------------------------------------------------------------------
+function calendarPrevMonth() {
+    currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+    renderCalendar();
+}
+
+function calendarNextMonth() {
+    currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+    renderCalendar();
+}
+function renderCalendar() {
+    const year = currentCalendarDate.getFullYear();
+    const month = currentCalendarDate.getMonth();
+    
+    // Set Header
+    const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+    const headerSpan = document.getElementById("agenda-cal-month-year");
+    if (headerSpan) headerSpan.innerText = `${monthNames[month]} de ${year}`;
+    
+    const daysContainer = document.getElementById("agenda-cal-days");
+    if (!daysContainer) return;
+    daysContainer.innerHTML = "";
+
+    const firstDayIndex = new Date(year, month, 1).getDay();
+    const lastDay = new Date(year, month + 1, 0).getDate();
+    const prevLastDay = new Date(year, month, 0).getDate();
+    
+    // Get all dates in agenda that have events to highlight them
+    const eventDates = new Set(agenda.map(a => a.date));
+
+    // Previous month mock days
+    for (let x = firstDayIndex; x > 0; x--) {
+        const d = prevLastDay - x + 1;
+        const span = document.createElement("span");
+        span.className = "cal-day-num text-muted";
+        span.innerText = d;
+        daysContainer.appendChild(span);
+    }
+    
+    // Current month days
+    for (let i = 1; i <= lastDay; i++) {
+        const dStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+        
+        const span = document.createElement("span");
+        span.className = "cal-day-num";
+        span.innerText = i;
+        span.style.cursor = "pointer";
+        
+        if (eventDates.has(dStr)) {
+            span.classList.add("has-event");
+        }
+        
+        const selY = selectedAgendaDate.getFullYear();
+        const selM = selectedAgendaDate.getMonth();
+        const selD = selectedAgendaDate.getDate();
+        if (selY === year && selM === month && selD === i) {
+            span.classList.add("active");
+        }
+        
+        span.onclick = () => {
+            selectedAgendaDate = new Date(year, month, i);
+            renderCalendar();
+            renderAgendaTimeline();
+        };
+        
+        daysContainer.appendChild(span);
+    }
+}
+
 function renderAgendaTimeline() {
     const timeline = document.getElementById("agenda-timeline-body");
     if (!timeline) return;
     timeline.innerHTML = "";
-    const sortedAgenda = [...agenda].sort((a, b) => a.time.localeCompare(b.time));
+    
+    const y = selectedAgendaDate.getFullYear();
+    const m = String(selectedAgendaDate.getMonth() + 1).padStart(2, '0');
+    const d = String(selectedAgendaDate.getDate()).padStart(2, '0');
+    const dateStr = `${y}-${m}-${d}`;
+    
+    const title = document.getElementById("agenda-timeline-title");
+    if (title) {
+        const today = new Date();
+        if (today.getFullYear() === y && today.getMonth() === selectedAgendaDate.getMonth() && today.getDate() === selectedAgendaDate.getDate()) {
+            title.innerText = `Compromissos Agendados (Hoje)`;
+        } else {
+            title.innerText = `Compromissos Agendados (${d}/${m}/${y})`;
+        }
+    }
+    
+    const filteredAgenda = agenda.filter(a => a.date === dateStr);
+    const sortedAgenda = [...filteredAgenda].sort((a, b) => a.time.localeCompare(b.time));
+    
+    if (sortedAgenda.length === 0) {
+        timeline.innerHTML = `<div style="text-align:center; padding: 30px; color: var(--text-muted); border: 1px dashed var(--border-subtle); border-radius: var(--radius-md);">Nenhum compromisso agendado para esta data.</div>`;
+        return;
+    }
+    
     sortedAgenda.forEach(evt => {
         const car = estoque.find(c => c.id === evt.carId);
         const carText = car ? `<div class="event-car"><i data-lucide="car"></i> ${car.model}</div>` : '';
