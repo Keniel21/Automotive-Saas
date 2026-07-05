@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,6 +19,7 @@
     <!-- Supabase Client SDK (PostgreSQL Nuvem) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
+
 <body>
 
     <!-- BARRA LATERAL FIXA DE NAVEGAÇÃO -->
@@ -63,6 +65,12 @@
                     <span>Vendas</span>
                 </a>
             </li>
+            <li class="menu-item" data-tab="clientes">
+                <a onclick="switchTab('clientes')">
+                    <i data-lucide="briefcase"></i>
+                    <span>Clientes / Lojas</span>
+                </a>
+            </li>
 
             <span class="menu-category">Financeiro & Agenda</span>
             <li class="menu-item" data-tab="financeiro">
@@ -99,7 +107,9 @@
                 <h4 id="footer-username">Marcelo Motors</h4>
                 <p>Operador Único</p>
             </div>
-            <i data-lucide="log-out" onclick="handleLogout()" style="cursor:pointer; color:var(--red-alert); margin-left:auto; transition: var(--transition-fast)" title="Sair do Sistema"></i>
+            <i data-lucide="log-out" onclick="handleLogout()"
+                style="cursor:pointer; color:var(--red-alert); margin-left:auto; transition: var(--transition-fast)"
+                title="Sair do Sistema"></i>
         </div>
     </aside>
 
@@ -134,6 +144,30 @@
              ABA 1: HOME / DASHBOARD
              ========================================== -->
         <section id="dashboard-tab" class="tab-pane active">
+            <!-- Barra de Filtro de Período -->
+            <div class="period-filter-bar">
+                <span class="period-filter-label"><i data-lucide="calendar-range"
+                        style="width:13px;height:13px;display:inline-block;vertical-align:middle;margin-right:4px;"></i>Período:</span>
+                <div class="period-btns" id="period-btns-dashboard">
+                    <button class="period-btn" id="pbtn-dash-today" onclick="applyPeriodFilter('today')">Hoje</button>
+                    <button class="period-btn" id="pbtn-dash-7d" onclick="applyPeriodFilter('7d')">7 dias</button>
+                    <button class="period-btn active" id="pbtn-dash-30d" onclick="applyPeriodFilter('30d')">30
+                        dias</button>
+                    <button class="period-btn" id="pbtn-dash-month" onclick="applyPeriodFilter('month')">Este
+                        mês</button>
+                    <button class="period-btn" id="pbtn-dash-year" onclick="applyPeriodFilter('year')">Este ano</button>
+                    <button class="period-btn" id="pbtn-dash-all" onclick="applyPeriodFilter('all')">Tudo</button>
+                    <button class="period-btn" id="pbtn-dash-custom"
+                        onclick="applyPeriodFilter('custom')">Personalizado</button>
+                </div>
+                <div class="period-custom-range" id="period-custom-range" style="display:none">
+                    <input type="date" id="period-date-start" onchange="applyCustomPeriod()">
+                    <span>até</span>
+                    <input type="date" id="period-date-end" onchange="applyCustomPeriod()">
+                </div>
+                <span class="period-filter-info" id="period-filter-info"><i data-lucide="clock"
+                        style="width:12px;height:12px;"></i> Últimos 30 dias</span>
+            </div>
             <!-- Grid de KPIs -->
             <div class="dashboard-grid">
                 <div class="kpi-card blue">
@@ -191,7 +225,8 @@
                     </div>
                     <div class="kpi-value" id="kpi-parados" style="color: var(--red-alert);">0</div>
                     <div class="kpi-footer">
-                        <span class="kpi-trend negative" style="background-color: rgba(239, 68, 68, 0.2);"><i data-lucide="clock"></i> Crítico</span>
+                        <span class="kpi-trend negative" style="background-color: rgba(239, 68, 68, 0.2);"><i
+                                data-lucide="clock"></i> Crítico</span>
                         <span style="color: var(--text-muted);">Exige repasse/desconto</span>
                     </div>
                 </div>
@@ -266,21 +301,24 @@
                             </div>
                         </div>
                         <div class="shortcut-btn" onclick="openAddLeadModal()">
-                            <div class="shortcut-icon" style="color: var(--blue-primary);"><i data-lucide="user-plus"></i></div>
+                            <div class="shortcut-icon" style="color: var(--blue-primary);"><i
+                                    data-lucide="user-plus"></i></div>
                             <div class="shortcut-text">
                                 <h4>Cadastrar Lead</h4>
                                 <p>Capturar nova intenção</p>
                             </div>
                         </div>
                         <div class="shortcut-btn" onclick="switchTab('leads')">
-                            <div class="shortcut-icon" style="color: var(--yellow-warning);"><i data-lucide="kanban"></i></div>
+                            <div class="shortcut-icon" style="color: var(--yellow-warning);"><i
+                                    data-lucide="kanban"></i></div>
                             <div class="shortcut-text">
                                 <h4>Ver Quadro CRM</h4>
                                 <p>Mapear funil de vendas</p>
                             </div>
                         </div>
                         <div class="shortcut-btn" onclick="switchTab('excel')">
-                            <div class="shortcut-icon" style="color: var(--green-profit);"><i data-lucide="file-spreadsheet"></i></div>
+                            <div class="shortcut-icon" style="color: var(--green-profit);"><i
+                                    data-lucide="file-spreadsheet"></i></div>
                             <div class="shortcut-text">
                                 <h4>Guia Excel</h4>
                                 <p>Replicar esse visual na planilha</p>
@@ -298,14 +336,17 @@
             <div class="table-controls">
                 <div class="search-wrapper">
                     <i data-lucide="search"></i>
-                    <input type="text" class="search-input" id="search-estoque" placeholder="Buscar por modelo, placa, cor, chassi..." oninput="filterEstoqueTable()">
+                    <input type="text" class="search-input" id="search-estoque"
+                        placeholder="Buscar por modelo, placa, cor, chassi..." oninput="filterEstoqueTable()">
                 </div>
                 <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
                     <div class="view-toggle" style="margin-right: 8px;">
-                        <button class="view-toggle-btn active" id="toggle-estoque-lista" onclick="setEstoqueView('lista')" title="Visualização em Lista">
+                        <button class="view-toggle-btn active" id="toggle-estoque-lista"
+                            onclick="setEstoqueView('lista')" title="Visualização em Lista">
                             <i data-lucide="list"></i>
                         </button>
-                        <button class="view-toggle-btn" id="toggle-estoque-grade" onclick="setEstoqueView('grade')" title="Visualização em Grade">
+                        <button class="view-toggle-btn" id="toggle-estoque-grade" onclick="setEstoqueView('grade')"
+                            title="Visualização em Grade">
                             <i data-lucide="grid"></i>
                         </button>
                     </div>
@@ -316,7 +357,8 @@
                         <button class="filter-btn" onclick="filterEstoqueStatus('reservado')">Reservados</button>
                         <button class="filter-btn" onclick="filterEstoqueStatus('vendido')">Vendidos</button>
                     </div>
-                    <button class="btn btn-secondary btn-export-excel" onclick="exportEstoqueToExcel()" title="Exportar estoque para planilha Excel (CSV)">
+                    <button class="btn btn-secondary btn-export-excel" onclick="exportEstoqueToExcel()"
+                        title="Exportar estoque para planilha Excel (CSV)">
                         <i data-lucide="file-spreadsheet"></i> Exportar
                     </button>
                 </div>
@@ -326,15 +368,42 @@
                 <table class="saas-table" id="estoque-table">
                     <thead>
                         <tr>
-                            <th>Veículo</th>
-                            <th>Ano</th>
-                            <th>KM</th>
-                            <th>Valor Compra</th>
-                            <th>Valor Venda</th>
-                            <th>Margem / Lucro Est.</th>
-                            <th>Dias em Estoque</th>
-                            <th>Tipo de Venda</th>
-                            <th>Status</th>
+                            <th class="sortable-header" onclick="sortEstoque('model')">
+                                Veículo <i data-lucide="chevrons-up-down" class="sort-icon" id="sort-icon-model"></i>
+                            </th>
+                            <th class="sortable-header" onclick="sortEstoque('document_status')">
+                                Doc <i data-lucide="chevrons-up-down" class="sort-icon"
+                                    id="sort-icon-document_status"></i>
+                            </th>
+                            <th class="sortable-header" onclick="sortEstoque('year')">
+                                Ano <i data-lucide="chevrons-up-down" class="sort-icon" id="sort-icon-year"></i>
+                            </th>
+                            <th class="sortable-header" onclick="sortEstoque('km')">
+                                KM <i data-lucide="chevrons-up-down" class="sort-icon" id="sort-icon-km"></i>
+                            </th>
+                            <th class="sortable-header" onclick="sortEstoque('buyPrice')">
+                                Valor Compra <i data-lucide="chevrons-up-down" class="sort-icon"
+                                    id="sort-icon-buyPrice"></i>
+                            </th>
+                            <th class="sortable-header" onclick="sortEstoque('sellPrice')">
+                                Valor Venda <i data-lucide="chevrons-up-down" class="sort-icon"
+                                    id="sort-icon-sellPrice"></i>
+                            </th>
+                            <th class="sortable-header" onclick="sortEstoque('margin')">
+                                Margem / Lucro Est. <i data-lucide="chevrons-up-down" class="sort-icon"
+                                    id="sort-icon-margin"></i>
+                            </th>
+                            <th class="sortable-header" onclick="sortEstoque('days')">
+                                Dias em Estoque <i data-lucide="chevrons-up-down" class="sort-icon"
+                                    id="sort-icon-days"></i>
+                            </th>
+                            <th class="sortable-header" onclick="sortEstoque('type')">
+                                Tipo de Venda <i data-lucide="chevrons-up-down" class="sort-icon"
+                                    id="sort-icon-type"></i>
+                            </th>
+                            <th class="sortable-header" onclick="sortEstoque('status')">
+                                Status <i data-lucide="chevrons-up-down" class="sort-icon" id="sort-icon-status"></i>
+                            </th>
                             <th style="text-align: center;">Ações</th>
                         </tr>
                     </thead>
@@ -346,6 +415,268 @@
 
             <div id="estoque-grid-view" class="estoque-grid" style="display:none;">
                 <!-- Gerado Dinamicamente por app.js -->
+            </div>
+        </section>
+
+        <!-- ==========================================
+             ABA DE DETALHES DO VEÍCULO (TELA CHEIA)
+             ========================================== -->
+        <section id="car-details-tab" class="tab-pane">
+            <div class="car-details-container new-layout">
+                <!-- Cabeçalho Redesenhado -->
+                <div class="car-details-header-bar">
+                    <div class="cd-header-left">
+                        <button class="btn btn-secondary cd-back-btn" onclick="closeCarDetails()"
+                            title="Voltar para Estoque"><i data-lucide="arrow-left"></i></button>
+                        <div class="cd-title-wrap">
+                            <h2 class="car-details-title" id="cd-title">Veículo</h2>
+                            <span id="cd-status" class="badge">Status</span>
+                        </div>
+                    </div>
+
+                    <div class="cd-header-center">
+                        <div class="cd-quick-stat">
+                            <span class="cd-stat-label">Ano / Modelo</span>
+                            <span class="cd-stat-val" id="cd-summary-year">-</span>
+                        </div>
+                        <div class="cd-quick-stat">
+                            <span class="cd-stat-label">Quilometragem</span>
+                            <span class="cd-stat-val" id="cd-summary-km">-</span>
+                        </div>
+                        <div class="cd-quick-stat">
+                            <span class="cd-stat-label">Tipo de Venda</span>
+                            <span class="cd-stat-val" id="cd-summary-type" style="text-transform: capitalize;">-</span>
+                        </div>
+                    </div>
+
+                    <div class="cd-header-right">
+                        <div class="cd-price-wrap">
+                            <span class="cd-price-label">Preço de Venda</span>
+                            <span class="cd-price-val" id="cd-summary-price">R$ 0,00</span>
+                        </div>
+                        <div class="car-details-actions">
+                            <button class="btn btn-primary" id="cd-btn-save" onclick="saveCarDetails()"><i
+                                    data-lucide="save"
+                                    style="width:14px;height:14px;margin-right:6px;"></i>Salvar</button>
+                            <button class="btn btn-success" id="cd-btn-sell"
+                                onclick="document.getElementById('cd-sale-card').scrollIntoView({behavior: 'smooth'})"><i
+                                    data-lucide="badge-dollar-sign"
+                                    style="width:14px;height:14px;margin-right:6px;"></i>Vender</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="car-details-content-grid">
+                    <!-- Esquerda: Galeria e Ficha Técnica -->
+                    <div class="car-details-left-col">
+                        <!-- Galeria Estilo Hero -->
+                        <div class="car-details-gallery hero-layout">
+                            <div class="cd-main-img-wrap">
+                                <img src="" alt="Imagem do Carro" id="cd-main-img" class="car-details-main-img"
+                                    onerror="this.style.display='none'; document.getElementById('cd-no-img').style.display='flex'">
+                                <div id="cd-no-img" class="cd-no-img-box">
+                                    <i data-lucide="image-off"></i>
+                                    <span>Sem imagens disponíveis</span>
+                                </div>
+                            </div>
+                            <div class="cd-thumbs-wrap">
+                                <div class="car-details-thumbs vertical" id="cd-thumbs">
+                                    <!-- Preenchido dinamicamente -->
+                                </div>
+                                <label for="cd-photo-input" class="btn btn-secondary cd-add-photo-btn">
+                                    <i data-lucide="image-plus"></i> <span class="hide-on-mobile">Adicionar Fotos</span>
+                                </label>
+                                <input type="file" id="cd-photo-input" accept="image/*" multiple style="display:none;"
+                                    onchange="previewDetailsPhotos(this)">
+                            </div>
+                        </div>
+
+                        <!-- Ficha Técnica Estilo Overview e Gastos (Wrapper) -->
+                        <div class="car-overview-and-expenses-wrapper"
+                            style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px; flex: 1;">
+                            <!-- Financeiro e Margem (Movido) -->
+                            <div class="car-details-card table-card"
+                                style="margin-top: 0; padding: 32px; display: flex; flex-direction: column;">
+                                <h3 style="margin-bottom: 20px; font-size: 16px;">Financeiro e Margem</h3>
+                                <div class="fin-table" style="flex:1;">
+                                    <div class="fin-row">
+                                        <span class="fin-label">Preço de Custo (R$)</span>
+                                        <input type="text" class="inline-edit-input fin-input dimmed" id="cd-buy"
+                                            oninput="formatCurrencyInput(this); calculateDetailsFinancials()">
+                                    </div>
+                                    <div class="fin-row highlight-row">
+                                        <span class="fin-label">Preço de Venda (R$)</span>
+                                        <input type="text" class="inline-edit-input fin-input green-text" id="cd-sell"
+                                            oninput="formatCurrencyInput(this); calculateDetailsFinancials()">
+                                    </div>
+                                    <div class="fin-row">
+                                        <span class="fin-label">Despesas (R$)</span>
+                                        <span class="fin-val" id="cd-fin-expenses"
+                                            style="color:var(--red-alert);">-</span>
+                                    </div>
+                                    <div class="fin-row">
+                                        <span class="fin-label">Lucro Projetado</span>
+                                        <span class="fin-val" id="cd-profit">-</span>
+                                    </div>
+                                    <div class="fin-row">
+                                        <span class="fin-label">Margem Projetada</span>
+                                        <span class="fin-val" id="cd-margin">-</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Card de Gastos -->
+                            <div class="car-details-card expenses-card"
+                                style="margin-top: 0; padding: 32px; display:flex; flex-direction:column;">
+                                <div
+                                    style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                                    <h3 style="font-size: 16px; margin: 0;"><i data-lucide="receipt"
+                                            style="width:16px;height:16px;vertical-align:middle;margin-right:6px;color:var(--red-alert);"></i>
+                                        Gastos / Despesas</h3>
+                                    <button class="btn btn-primary btn-sm" style="padding:4px 8px; font-size:12px;"
+                                        onclick="openAddDespesaModalFromCar()"><i data-lucide="plus"
+                                            style="width:14px;height:14px;"></i> Lançar</button>
+                                </div>
+                                <div id="cd-expenses-list" style="flex:1; overflow-y:auto; padding-right:4px;">
+                                    <!-- Preenchido dinamicamente -->
+                                </div>
+                                <div
+                                    style="border-top:1px solid rgba(255,255,255,0.05); padding-top:16px; margin-top:16px; display:flex; justify-content:space-between; align-items:center; font-weight:600; font-size:14px;">
+                                    <span style="color:var(--text-muted); font-size:13px;">Custo Total:</span>
+                                    <span id="cd-expenses-total" style="color:var(--red-alert); font-size:16px;">R$
+                                        0,00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Direita: Financeiro e Estoque -->
+                    <div class="car-details-right-col">
+                        <!-- Overview (Movido) -->
+                        <div class="car-details-card overview-card">
+                            <h3 style="margin-bottom: 20px; font-size: 16px;">Overview <span
+                                    style="font-size:12px; font-weight:normal; color:var(--text-muted); margin-left:8px;">(Ficha
+                                    Técnica)</span></h3>
+                            <div class="car-overview-grid" style="grid-template-columns: 1fr 1fr; gap: 16px;">
+                                <div class="car-overview-col">
+                                    <div class="car-info-item"><span class="car-info-label">Ano / Modelo</span><input
+                                            type="text" class="inline-edit-input" id="cd-year" value="-"
+                                            oninput="updateSummaryFields()"></div>
+                                    <div class="car-info-item"><span class="car-info-label">Cor</span><input type="text"
+                                            class="inline-edit-input" id="cd-color" value="-"></div>
+                                    <div class="car-info-item"><span class="car-info-label">Placa</span><input
+                                            type="text" class="inline-edit-input" id="cd-plate"
+                                            style="text-transform:uppercase;" value="-"></div>
+                                    <div class="car-info-item"><span class="car-info-label">Quilometragem</span><input
+                                            type="number" class="inline-edit-input" id="cd-km" value="0"
+                                            oninput="updateSummaryFields()"></div>
+                                    <div class="car-info-item"><span class="car-info-label">Chassi</span><input
+                                            type="text" class="inline-edit-input" id="cd-chassis"
+                                            style="text-transform:uppercase;" value="-"></div>
+                                </div>
+                                <div class="car-overview-col">
+                                    <div class="car-info-item"><span class="car-info-label">Renavam</span><input
+                                            type="text" class="inline-edit-input" id="cd-renavam" value="-"></div>
+                                    <div class="car-info-item"><span class="car-info-label">Documento</span>
+                                        <select class="inline-edit-input" id="cd-document">
+                                            <option value="sim">Sim</option>
+                                            <option value="nao">Não</option>
+                                            <option value="pendente">Pendente</option>
+                                        </select>
+                                    </div>
+                                    <div class="car-info-item"><span class="car-info-label">Status</span>
+                                        <select class="inline-edit-input" id="cd-status-select"
+                                            onchange="updateDetailsStatusBadge()">
+                                            <option value="disponivel">Disponível</option>
+                                            <option value="preparacao">Em Preparação</option>
+                                            <option value="reservado">Reservado</option>
+                                            <option value="vendido">Vendido</option>
+                                        </select>
+                                    </div>
+                                    <div class="car-info-item"><span class="car-info-label">Tipo de Venda</span>
+                                        <select class="inline-edit-input" id="cd-type" onchange="updateSummaryFields()">
+                                            <option value="convencional">Convencional</option>
+                                            <option value="repasse">Repasse</option>
+                                        </select>
+                                    </div>
+                                    <div class="car-info-item"><span class="car-info-label">Fipe</span>
+                                        <div style="display:flex; gap: 4px; align-items:center;">
+                                            <input type="text" class="inline-edit-input" id="cd-fipe-code"
+                                                placeholder="Cód" style="width: 70px; font-size:12px; padding:4px;"
+                                                onblur="quickFipeSearch()" title="Código Fipe">
+                                            <input type="text" class="inline-edit-input" id="cd-fipe-price"
+                                                placeholder="R$ 0,00" style="width: 90px; font-size:12px; padding:4px;"
+                                                title="Valor Fipe">
+                                            <button class="btn btn-secondary" style="padding:4px; height:auto;"
+                                                onclick="openFipeSearchModal()" title="Buscar na Tabela Fipe"><i
+                                                    data-lucide="search" style="width:14px;height:14px;"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="car-details-card table-card" style="margin-top: 24px;">
+                            <h3 style="margin-bottom: 20px; font-size: 16px;">Logística e Estoque</h3>
+                            <div class="fin-table">
+                                <div class="fin-row">
+                                    <span class="fin-label">Data de Compra</span>
+                                    <input type="date" class="inline-edit-input fin-input" id="cd-purchase-date"
+                                        onchange="calculateDetailsFinancials()">
+                                </div>
+                                <div class="fin-row">
+                                    <span class="fin-label">Dias em Estoque</span>
+                                    <span class="fin-val" id="cd-days">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="car-details-card table-card" id="cd-sale-card"
+                            style="margin-top: 24px; border: 1px solid var(--green-profit); flex: 1; display: flex; flex-direction: column;">
+                            <h3 style="margin-bottom: 20px; font-size: 16px; color: var(--green-profit);"><i
+                                    data-lucide="badge-dollar-sign"
+                                    style="width:18px;height:18px;vertical-align:bottom;margin-right:4px;"></i>
+                                Movimentação e Venda</h3>
+                            <div class="fin-table" id="cd-sale-form">
+                                <div class="fin-row" style="position: relative; overflow: visible;">
+                                    <span class="fin-label">Comprador / Cliente</span>
+                                    <div style="position: relative;">
+                                        <input type="text" class="inline-edit-input fin-input" id="cd-sell-client"
+                                            placeholder="Buscar ou novo nome" style="width: 200px;" autocomplete="off"
+                                            oninput="handleClientSearch()" onfocus="handleClientSearch()">
+                                        <div id="cd-client-dropdown" class="custom-dropdown" style="display: none;">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="fin-row">
+                                    <span class="fin-label">CPF / CNPJ</span>
+                                    <input type="text" class="inline-edit-input fin-input" id="cd-sell-doc"
+                                        placeholder="000.000.000-00" style="width: 150px;">
+                                </div>
+                                <div class="fin-row">
+                                    <span class="fin-label">Data da Venda</span>
+                                    <input type="date" class="inline-edit-input fin-input" id="cd-sell-date">
+                                </div>
+                                <div class="fin-row">
+                                    <span class="fin-label">Tipo de Venda</span>
+                                    <select class="inline-edit-input fin-input" id="cd-sell-type" style="width: 140px;">
+                                        <option value="convencional">Convencional</option>
+                                        <option value="repasse">Repasse</option>
+                                    </select>
+                                </div>
+                                <div class="fin-row" style="justify-content: center; padding-top: 24px;"
+                                    id="cd-sale-action-row">
+                                    <button class="btn btn-success"
+                                        style="width: 100%; justify-content: center; padding: 12px; font-size: 15px; font-weight: 600;"
+                                        onclick="confirmCarSale(event)">
+                                        <i data-lucide="check-circle"
+                                            style="width:18px;height:18px;margin-right:8px;"></i> Confirmar Venda
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -400,7 +731,8 @@
             <div class="crm-controls">
                 <div class="search-wrapper" style="max-width: 320px;">
                     <i data-lucide="search"></i>
-                    <input type="text" class="search-input" id="search-leads" placeholder="Buscar lead..." oninput="filterKanban()">
+                    <input type="text" class="search-input" id="search-leads" placeholder="Buscar lead..."
+                        oninput="filterKanban()">
                 </div>
                 <div style="display:flex; gap:12px; align-items:center;">
                     <div class="view-toggle">
@@ -411,7 +743,8 @@
                             <i data-lucide="list"></i> Tabela Simples
                         </button>
                     </div>
-                    <button class="btn btn-secondary btn-export-excel" onclick="exportLeadsToExcel()" title="Exportar leads para planilha Excel">
+                    <button class="btn btn-secondary btn-export-excel" onclick="exportLeadsToExcel()"
+                        title="Exportar leads para planilha Excel">
                         <i data-lucide="file-spreadsheet"></i> Exportar
                     </button>
                 </div>
@@ -425,7 +758,8 @@
                         <span class="kanban-title"><span class="kanban-dot dot-novo"></span>Novo Lead</span>
                         <span class="kanban-count" id="count-novo">0</span>
                     </div>
-                    <div class="kanban-cards" id="cards-novo" ondragover="allowDrop(event)" ondrop="dropLead(event, 'novo lead')"></div>
+                    <div class="kanban-cards" id="cards-novo" ondragover="allowDrop(event)"
+                        ondrop="dropLead(event, 'novo lead')"></div>
                 </div>
 
                 <!-- Coluna 2: Contato Realizado -->
@@ -434,7 +768,8 @@
                         <span class="kanban-title"><span class="kanban-dot dot-contato"></span>Contato</span>
                         <span class="kanban-count" id="count-contato">0</span>
                     </div>
-                    <div class="kanban-cards" id="cards-contato" ondragover="allowDrop(event)" ondrop="dropLead(event, 'contato realizado')"></div>
+                    <div class="kanban-cards" id="cards-contato" ondragover="allowDrop(event)"
+                        ondrop="dropLead(event, 'contato realizado')"></div>
                 </div>
 
                 <!-- Coluna 3: Negociação -->
@@ -443,7 +778,8 @@
                         <span class="kanban-title"><span class="kanban-dot dot-negociacao"></span>Negociação</span>
                         <span class="kanban-count" id="count-negociacao">0</span>
                     </div>
-                    <div class="kanban-cards" id="cards-negociacao" ondragover="allowDrop(event)" ondrop="dropLead(event, 'negociação')"></div>
+                    <div class="kanban-cards" id="cards-negociacao" ondragover="allowDrop(event)"
+                        ondrop="dropLead(event, 'negociação')"></div>
                 </div>
 
                 <!-- Coluna 4: Sem Resposta -->
@@ -452,7 +788,8 @@
                         <span class="kanban-title"><span class="kanban-dot dot-sem-resposta"></span>Sem Resposta</span>
                         <span class="kanban-count" id="count-sem-resposta">0</span>
                     </div>
-                    <div class="kanban-cards" id="cards-sem-resposta" ondragover="allowDrop(event)" ondrop="dropLead(event, 'sem resposta')"></div>
+                    <div class="kanban-cards" id="cards-sem-resposta" ondragover="allowDrop(event)"
+                        ondrop="dropLead(event, 'sem resposta')"></div>
                 </div>
 
                 <!-- Coluna 5: Fechado (Ganho) -->
@@ -461,16 +798,19 @@
                         <span class="kanban-title"><span class="kanban-dot dot-fechado"></span>Fechado (Ganho)</span>
                         <span class="kanban-count" id="count-fechado">0</span>
                     </div>
-                    <div class="kanban-cards" id="cards-fechado" ondragover="allowDrop(event)" ondrop="dropLead(event, 'fechado')"></div>
+                    <div class="kanban-cards" id="cards-fechado" ondragover="allowDrop(event)"
+                        ondrop="dropLead(event, 'fechado')"></div>
                 </div>
 
                 <!-- Coluna 6: Perdido -->
                 <div class="kanban-column" data-status="perdido">
                     <div class="kanban-header">
-                        <span class="kanban-title"><span class="kanban-dot dot-perdido"></span>Perdido / Sem interesse</span>
+                        <span class="kanban-title"><span class="kanban-dot dot-perdido"></span>Perdido / Sem
+                            interesse</span>
                         <span class="kanban-count" id="count-perdido">0</span>
                     </div>
-                    <div class="kanban-cards" id="cards-perdido" ondragover="allowDrop(event)" ondrop="dropLead(event, 'perdido')"></div>
+                    <div class="kanban-cards" id="cards-perdido" ondragover="allowDrop(event)"
+                        ondrop="dropLead(event, 'perdido')"></div>
                 </div>
             </div>
 
@@ -497,9 +837,94 @@
         </section>
 
         <!-- ==========================================
+             ABA DE CLIENTES (CRM / BASE DE LOJAS)
+             ========================================== -->
+        <section id="clientes-tab" class="tab-pane">
+            <div class="dashboard-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 24px;">
+                <div class="kpi-card blue">
+                    <div class="kpi-header">
+                        <span class="kpi-title">Total de Clientes</span>
+                        <i data-lucide="users"></i>
+                    </div>
+                    <div class="kpi-value" id="kpi-total-clientes">0</div>
+                    <div class="kpi-subtitle">Na base de dados</div>
+                </div>
+                <div class="kpi-card green">
+                    <div class="kpi-header">
+                        <span class="kpi-title">Maior Comprador (Volume R$)</span>
+                        <i data-lucide="trending-up"></i>
+                    </div>
+                    <div class="kpi-value" id="kpi-maior-comprador-vol" style="font-size: 20px;">-</div>
+                    <div class="kpi-subtitle" id="kpi-maior-comprador-vol-val">R$ 0</div>
+                </div>
+                <div class="kpi-card purple">
+                    <div class="kpi-header">
+                        <span class="kpi-title">Maior Comprador (Unidades)</span>
+                        <i data-lucide="car-front"></i>
+                    </div>
+                    <div class="kpi-value" id="kpi-maior-comprador-qtd" style="font-size: 20px;">-</div>
+                    <div class="kpi-subtitle" id="kpi-maior-comprador-qtd-val">0 carros</div>
+                </div>
+            </div>
+            <div class="table-controls">
+                <div class="search-wrapper">
+                    <i data-lucide="search"></i>
+                    <input type="text" class="search-input" id="search-client"
+                        placeholder="Buscar cliente por nome ou documento..." oninput="renderClientesTable()">
+                </div>
+                <div style="display:flex; gap:12px; align-items:center;">
+                    <button class="btn btn-primary" onclick="openAddClientModal()"><i data-lucide="user-plus"></i> Novo
+                        Cliente</button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="saas-table">
+                    <thead>
+                        <tr>
+                            <th onclick="sortClientesTable('name')" style="cursor: pointer; user-select: none;">
+                                Nome da Loja / Cliente <i data-lucide="arrow-up-down"
+                                    style="width: 14px; height: 14px; margin-left: 4px; vertical-align: middle;"></i>
+                            </th>
+                            <th>CPF / CNPJ</th>
+                            <th>Telefone / Contato</th>
+                            <th>E-mail</th>
+                            <th>Data de Cadastro</th>
+                            <th style="text-align: center;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="clientes-tbody">
+                        <!-- Preenchido via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ==========================================
              ABA 4: VENDAS (HISTÓRICO)
              ========================================== -->
         <section id="vendas-tab" class="tab-pane">
+            <!-- Barra de Filtro de Período -->
+            <div class="period-filter-bar">
+                <span class="period-filter-label"><i data-lucide="calendar-range"
+                        style="width:13px;height:13px;display:inline-block;vertical-align:middle;margin-right:4px;"></i>Período:</span>
+                <div class="period-btns" id="period-btns-vendas">
+                    <button class="period-btn" onclick="applyPeriodFilter('today')">Hoje</button>
+                    <button class="period-btn" onclick="applyPeriodFilter('7d')">7 dias</button>
+                    <button class="period-btn" onclick="applyPeriodFilter('30d')">30 dias</button>
+                    <button class="period-btn" onclick="applyPeriodFilter('month')">Este mês</button>
+                    <button class="period-btn" onclick="applyPeriodFilter('year')">Este ano</button>
+                    <button class="period-btn" onclick="applyPeriodFilter('all')">Tudo</button>
+                    <button class="period-btn" onclick="applyPeriodFilter('custom')">Personalizado</button>
+                </div>
+                <div class="period-custom-range" id="period-custom-range-vendas" style="display:none">
+                    <input type="date" id="period-date-start-vendas" onchange="syncAndApplyCustomPeriod('vendas')">
+                    <span>até</span>
+                    <input type="date" id="period-date-end-vendas" onchange="syncAndApplyCustomPeriod('vendas')">
+                </div>
+                <span class="period-filter-info"><i data-lucide="clock" style="width:12px;height:12px;"></i> <span
+                        id="period-filter-info-vendas">Últimos 30 dias</span></span>
+            </div>
             <div class="dashboard-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 24px;">
                 <div class="kpi-card green">
                     <div class="kpi-header">
@@ -532,8 +957,9 @@
             </div>
 
             <div class="table-controls" style="justify-content: flex-end;">
-                <button class="btn btn-secondary btn-export-excel" onclick="exportVendasToExcel()" title="Exportar relatório de fechamentos para Excel">
-                    <i data-lucide="file-spreadsheet"></i> Exportar Vendas
+                <button class="btn btn-secondary btn-export-excel" onclick="exportVendasToExcel()"
+                    title="Exportar relatório de fechamentos para Excel">
+                    <i data-lucide="file-spreadsheet"></i> Relatório Contábil (Excel)
                 </button>
             </div>
 
@@ -562,6 +988,29 @@
              ABA 5: FINANCEIRO
              ========================================== -->
         <section id="financeiro-tab" class="tab-pane">
+            <!-- Barra de Filtro de Período -->
+            <div class="period-filter-bar">
+                <span class="period-filter-label"><i data-lucide="calendar-range"
+                        style="width:13px;height:13px;display:inline-block;vertical-align:middle;margin-right:4px;"></i>Período:</span>
+                <div class="period-btns" id="period-btns-financeiro">
+                    <button class="period-btn" onclick="applyPeriodFilter('today')">Hoje</button>
+                    <button class="period-btn" onclick="applyPeriodFilter('7d')">7 dias</button>
+                    <button class="period-btn" onclick="applyPeriodFilter('30d')">30 dias</button>
+                    <button class="period-btn" onclick="applyPeriodFilter('month')">Este mês</button>
+                    <button class="period-btn" onclick="applyPeriodFilter('year')">Este ano</button>
+                    <button class="period-btn" onclick="applyPeriodFilter('all')">Tudo</button>
+                    <button class="period-btn" onclick="applyPeriodFilter('custom')">Personalizado</button>
+                </div>
+                <div class="period-custom-range" id="period-custom-range-financeiro" style="display:none">
+                    <input type="date" id="period-date-start-financeiro"
+                        onchange="syncAndApplyCustomPeriod('financeiro')">
+                    <span>até</span>
+                    <input type="date" id="period-date-end-financeiro"
+                        onchange="syncAndApplyCustomPeriod('financeiro')">
+                </div>
+                <span class="period-filter-info"><i data-lucide="clock" style="width:12px;height:12px;"></i> <span
+                        id="period-filter-info-financeiro">Últimos 30 dias</span></span>
+            </div>
             <div class="finance-summary-grid">
                 <div class="finance-card inputs">
                     <div class="finance-card-icon"><i data-lucide="arrow-down-left"></i></div>
@@ -608,7 +1057,8 @@
                             <p>Gastos específicos com preparação ou operacional</p>
                         </div>
                         <div style="display:flex; gap:8px;">
-                            <button class="btn btn-secondary btn-sm btn-export-excel" onclick="exportDespesasToExcel()" title="Exportar despesas de preparação para Excel">
+                            <button class="btn btn-secondary btn-sm btn-export-excel" onclick="exportDespesasToExcel()"
+                                title="Exportar despesas de preparação para Excel">
                                 <i data-lucide="file-spreadsheet"></i> Exportar
                             </button>
                             <button class="btn btn-primary btn-sm" onclick="openAddDespesaModal()">
@@ -660,8 +1110,16 @@
                         <div class="mini-cal-header">
                             <span id="agenda-cal-month-year" style="text-transform: capitalize;">Maio de 2026</span>
                             <div style="display:flex; gap: 8px;">
-                                <div style="cursor:pointer; display:flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:4px;" onclick="calendarPrevMonth()" onmouseover="this.style.backgroundColor='var(--border-subtle)'" onmouseout="this.style.backgroundColor='transparent'"><i data-lucide="chevron-left" style="width:16px;"></i></div>
-                                <div style="cursor:pointer; display:flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:4px;" onclick="calendarNextMonth()" onmouseover="this.style.backgroundColor='var(--border-subtle)'" onmouseout="this.style.backgroundColor='transparent'"><i data-lucide="chevron-right" style="width:16px;"></i></div>
+                                <div style="cursor:pointer; display:flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:4px;"
+                                    onclick="calendarPrevMonth()"
+                                    onmouseover="this.style.backgroundColor='var(--border-subtle)'"
+                                    onmouseout="this.style.backgroundColor='transparent'"><i data-lucide="chevron-left"
+                                        style="width:16px;"></i></div>
+                                <div style="cursor:pointer; display:flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:4px;"
+                                    onclick="calendarNextMonth()"
+                                    onmouseover="this.style.backgroundColor='var(--border-subtle)'"
+                                    onmouseout="this.style.backgroundColor='transparent'"><i data-lucide="chevron-right"
+                                        style="width:16px;"></i></div>
                             </div>
                         </div>
                         <div class="mini-cal-grid">
@@ -701,7 +1159,8 @@
 
                 <!-- Timeline detalhada da agenda -->
                 <div class="agenda-timeline">
-                    <div class="panel-header" style="margin-bottom:0px; padding-bottom: 10px; border-bottom: 1px solid var(--border-subtle)">
+                    <div class="panel-header"
+                        style="margin-bottom:0px; padding-bottom: 10px; border-bottom: 1px solid var(--border-subtle)">
                         <div class="panel-title">
                             <h3 id="agenda-timeline-title">Compromissos Agendados</h3>
                             <p>Rotina operacional do operador sem ponto físico</p>
@@ -727,20 +1186,26 @@
                     <p>Gerencie o acesso de novos operadores ao CRM</p>
                 </div>
             </div>
-            <div class="saas-card" style="margin-top: 20px; background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 24px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; gap:12px; flex-wrap:wrap;">
-                    <input type="text" id="search-usuarios" class="form-control" placeholder="Buscar por e-mail..." oninput="filterUsuariosTable()" style="max-width:300px; margin-bottom:0;">
-                    <button class="btn btn-secondary" onclick="loadProfiles()"><i data-lucide="refresh-cw"></i> Atualizar</button>
+            <div class="saas-card"
+                style="margin-top: 20px; background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 24px;">
+                <div
+                    style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; gap:12px; flex-wrap:wrap;">
+                    <input type="text" id="search-usuarios" class="form-control" placeholder="Buscar por e-mail..."
+                        oninput="filterUsuariosTable()" style="max-width:300px; margin-bottom:0;">
+                    <button class="btn btn-secondary" onclick="loadProfiles()"><i data-lucide="refresh-cw"></i>
+                        Atualizar</button>
                 </div>
                 <div class="table-responsive">
                     <table class="table" style="width:100%; border-collapse:collapse;">
                         <thead>
                             <tr style="border-bottom:1px solid var(--border-color); text-align:left;">
                                 <th style="padding:12px; color:var(--text-muted); font-weight:600;">E-mail</th>
-                                <th style="padding:12px; color:var(--text-muted); font-weight:600;">Data do Cadastro</th>
+                                <th style="padding:12px; color:var(--text-muted); font-weight:600;">Data do Cadastro
+                                </th>
                                 <th style="padding:12px; color:var(--text-muted); font-weight:600;">Nível de Acesso</th>
                                 <th style="padding:12px; color:var(--text-muted); font-weight:600;">Status</th>
-                                <th style="padding:12px; color:var(--text-muted); font-weight:600; text-align:center;">Ações</th>
+                                <th style="padding:12px; color:var(--text-muted); font-weight:600; text-align:center;">
+                                    Ações</th>
                             </tr>
                         </thead>
                         <tbody id="usuarios-table-body">
@@ -760,7 +1225,10 @@
                     <div class="excel-intro-icon"><i data-lucide="file-spreadsheet"></i></div>
                     <div class="excel-intro-text">
                         <h3>Guia de Tradução Visual: Do SaaS para o Excel</h3>
-                        <p>Marcelo, você pode recriar esta mesma estética profissional de HubSpot e PipeDrive diretamente no seu Excel. Uma planilha bem configurada visualmente gera o mesmo valor de organização e clareza de um software nativo, sem custar mensalidade. Abaixo está o passo a passo exato do seu <strong>Design System no Excel</strong>.</p>
+                        <p>Marcelo, você pode recriar esta mesma estética profissional de HubSpot e PipeDrive
+                            diretamente no seu Excel. Uma planilha bem configurada visualmente gera o mesmo valor de
+                            organização e clareza de um software nativo, sem custar mensalidade. Abaixo está o passo a
+                            passo exato do seu <strong>Design System no Excel</strong>.</p>
                     </div>
                 </div>
 
@@ -770,7 +1238,9 @@
                         <span class="step-num">1</span>
                         <h4>Configuração da Paleta de Cores Customizada</h4>
                     </div>
-                    <p>No Excel, não utilize as cores padrão (vermelho vivo, azul clássico). Vá em <strong>Página Inicial > Cor de Preenchimento > Mais Cores > Personalizado</strong> e defina o padrão Dark Mode digitando os valores HEX ou RGB:</p>
+                    <p>No Excel, não utilize as cores padrão (vermelho vivo, azul clássico). Vá em <strong>Página
+                            Inicial > Cor de Preenchimento > Mais Cores > Personalizado</strong> e defina o padrão Dark
+                        Mode digitando os valores HEX ou RGB:</p>
                     <div class="color-palette-guide">
                         <div class="color-guide-item">
                             <div class="color-preview bg"></div>
@@ -810,9 +1280,14 @@
                             <span>HEX: #EF4444</span><br>
                             <span style="font-size:9px;color:var(--text-muted)">RGB: (239, 68, 68)</span>
                         </div>
-                        <div class="color-guide-item" style="grid-column: span 2; background-color: rgba(255,255,255,0.02)">
+                        <div class="color-guide-item"
+                            style="grid-column: span 2; background-color: rgba(255,255,255,0.02)">
                             <p style="margin-top:10px; font-weight:600; color:var(--text-light)">Dica de Ouro de UX</p>
-                            <p style="font-size:12px; color:var(--text-muted); padding:5px 10px">Selecione toda a planilha do Excel e aplique o preenchimento <strong>#111827</strong>. Para tabelas, utilize linhas com fundo alternado entre <strong>#1F2937</strong> e <strong>#17212D</strong>.</p>
+                            <p style="font-size:12px; color:var(--text-muted); padding:5px 10px">Selecione toda a
+                                planilha do Excel e aplique o preenchimento <strong>#111827</strong>. Para tabelas,
+                                utilize linhas com fundo alternado entre <strong>#1F2937</strong> e
+                                <strong>#17212D</strong>.
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -824,13 +1299,20 @@
                         <h4>Tipografia e Hierarquia Visual</h4>
                     </div>
                     <ul class="guide-list">
-                        <li><strong>Fonte única:</strong> Altere a fonte padrão (Calibri) de toda a sua planilha para <strong>Segoe UI</strong> (instalada por padrão no Windows e visualmente idêntica à fonte <em>Inter</em> usada em SaaS de ponta).</li>
+                        <li><strong>Fonte única:</strong> Altere a fonte padrão (Calibri) de toda a sua planilha para
+                            <strong>Segoe UI</strong> (instalada por padrão no Windows e visualmente idêntica à fonte
+                            <em>Inter</em> usada em SaaS de ponta).
+                        </li>
                         <li><strong>Hierarquia de Tamanhos:</strong>
                             <br>- Títulos e KPIs Grandes: <strong>20pt ou 24pt, Negrito</strong>.
-                            <br>- Cabeçalhos de Tabelas: <strong>9pt, Negrito, Caixa Alta, Cor Cinza Claro (#9CA3AF)</strong>.
+                            <br>- Cabeçalhos de Tabelas: <strong>9pt, Negrito, Caixa Alta, Cor Cinza Claro
+                                (#9CA3AF)</strong>.
                             <br>- Dados da Tabela: <strong>10pt ou 11pt, Normal, Cor Branca (#F9FAFB)</strong>.
                         </li>
-                        <li><strong>Limpeza de Gridline:</strong> O erro nº 1 de planilhas é manter as linhas de grade cinzas padrão. Vá na aba <strong>Exibir</strong> e desmarque a caixa <strong>Linhas de Grade</strong>. Use bordas manuais finas e discretas na cor cinza escuro para separar as linhas.</li>
+                        <li><strong>Limpeza de Gridline:</strong> O erro nº 1 de planilhas é manter as linhas de grade
+                            cinzas padrão. Vá na aba <strong>Exibir</strong> e desmarque a caixa <strong>Linhas de
+                                Grade</strong>. Use bordas manuais finas e discretas na cor cinza escuro para separar as
+                            linhas.</li>
                     </ul>
                 </div>
 
@@ -840,17 +1322,21 @@
                         <span class="step-num">3</span>
                         <h4>Fórmulas Cruciais de Negócio</h4>
                     </div>
-                    <p>Use estas fórmulas exatas na sua tabela de estoque e leads para gerar os cálculos dinâmicos do Dashboard:</p>
-                    
+                    <p>Use estas fórmulas exatas na sua tabela de estoque e leads para gerar os cálculos dinâmicos do
+                        Dashboard:</p>
+
                     <div style="margin-top: 12px;">
                         <strong>Dias em Estoque (Diferença entre hoje e data de compra):</strong>
-                        <div class="formula-block">=SE(STATUS="Vendido"; DATA_VENDA - DATA_COMPRA; HOJE() - DATA_COMPRA)</div>
-                        <span style="font-size:11px; color:var(--text-muted)">*Isso evita que carros vendidos continuem somando dias de estoque.</span>
+                        <div class="formula-block">=SE(STATUS="Vendido"; DATA_VENDA - DATA_COMPRA; HOJE() - DATA_COMPRA)
+                        </div>
+                        <span style="font-size:11px; color:var(--text-muted)">*Isso evita que carros vendidos continuem
+                            somando dias de estoque.</span>
                     </div>
 
                     <div style="margin-top: 14px;">
                         <strong>Lucro e Margem no Veículo:</strong>
-                        <div class="formula-block">Lucro Esperado: =VALOR_VENDA - VALOR_COMPRA - DESPESAS_PREPARACAO</div>
+                        <div class="formula-block">Lucro Esperado: =VALOR_VENDA - VALOR_COMPRA - DESPESAS_PREPARACAO
+                        </div>
                         <div class="formula-block">Margem (%): =SE(VALOR_VENDA>0; LUCRO / VALOR_VENDA; 0)</div>
                     </div>
                 </div>
@@ -861,14 +1347,18 @@
                         <span class="step-num">4</span>
                         <h4>Formatação Condicional (Veículos Parados +30 dias)</h4>
                     </div>
-                    <p>Para destacar veículos que estão parados há mais de 30 dias na planilha (essencial para o giro rápido no modelo sem loja física):</p>
+                    <p>Para destacar veículos que estão parados há mais de 30 dias na planilha (essencial para o giro
+                        rápido no modelo sem loja física):</p>
                     <ol class="guide-list" style="margin-left: 20px;">
                         <li>Selecione a coluna de <strong>Dias em Estoque</strong>.</li>
-                        <li>Clique em <strong>Formatação Condicional > Nova Regra > Usar uma fórmula para determinar...</strong>.</li>
-                        <li>Digite a fórmula (considerando que a célula inicial de dias é a G2 e a célula de status é I2):
+                        <li>Clique em <strong>Formatação Condicional > Nova Regra > Usar uma fórmula para
+                                determinar...</strong>.</li>
+                        <li>Digite a fórmula (considerando que a célula inicial de dias é a G2 e a célula de status é
+                            I2):
                             <div class="formula-block">=E(G2>30; I2<>"Vendido")</div>
                         </li>
-                        <li>Defina o Formato: Preenchimento Vermelho Escuro/Opaco (<strong>#EF4444</strong> em 20% de opacidade) e fonte Vermelha Clara.</li>
+                        <li>Defina o Formato: Preenchimento Vermelho Escuro/Opaco (<strong>#EF4444</strong> em 20% de
+                            opacidade) e fonte Vermelha Clara.</li>
                     </ol>
                 </div>
             </div>
@@ -878,7 +1368,7 @@
     <!-- ==========================================================
          SISTEMA DE MODAIS (POP-UPS INTERATIVOS)
          ========================================================== -->
-    
+
     <!-- Modal 1: Adicionar Lead -->
     <div class="modal-overlay" id="modal-add-lead">
         <div class="modal-content">
@@ -894,7 +1384,8 @@
                     </div>
                     <div class="form-group">
                         <label for="lead-phone">Telefone / WhatsApp</label>
-                        <input type="text" id="lead-phone" class="form-control" placeholder="Ex: (11) 99876-5432" required>
+                        <input type="text" id="lead-phone" class="form-control" placeholder="Ex: (11) 99876-5432"
+                            required>
                     </div>
                     <div class="form-group">
                         <label for="lead-interest">Veículo de Interesse</label>
@@ -949,13 +1440,15 @@
                                 <i data-lucide="upload-cloud"></i>
                                 <span>Selecionar Imagem</span>
                             </label>
-                            <input type="file" id="car-photo-input" accept="image/*" multiple style="display:none;" onchange="previewVehiclePhoto(this, 'car-photo-preview')">
+                            <input type="file" id="car-photo-input" accept="image/*" multiple style="display:none;"
+                                onchange="previewVehiclePhoto(this, 'car-photo-preview')">
                         </div>
                     </div>
 
                     <div class="form-group">
                         <label for="car-brand-model">Marca / Modelo</label>
-                        <input type="text" id="car-brand-model" class="form-control" placeholder="Ex: Jeep Compass Longitude 2.0 Flex" required>
+                        <input type="text" id="car-brand-model" class="form-control"
+                            placeholder="Ex: Jeep Compass Longitude 2.0 Flex" required>
                     </div>
 
                     <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
@@ -972,18 +1465,21 @@
                     <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                         <div>
                             <label for="car-buy-val">Valor de Compra (R$)</label>
-                            <input type="number" id="car-buy-val" class="form-control" placeholder="Ex: 110000" required>
+                            <input type="number" id="car-buy-val" class="form-control" placeholder="Ex: 110000"
+                                required>
                         </div>
                         <div>
                             <label for="car-sell-val">Valor de Venda (R$)</label>
-                            <input type="number" id="car-sell-val" class="form-control" placeholder="Ex: 125900" required>
+                            <input type="number" id="car-sell-val" class="form-control" placeholder="Ex: 125900"
+                                required>
                         </div>
                     </div>
 
                     <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                         <div>
                             <label for="car-plate">Placa</label>
-                            <input type="text" id="car-plate" class="form-control" placeholder="Ex: BRA2E26" style="text-transform:uppercase;">
+                            <input type="text" id="car-plate" class="form-control" placeholder="Ex: BRA2E26"
+                                style="text-transform:uppercase;">
                         </div>
                         <div>
                             <label for="car-color">Cor</label>
@@ -991,9 +1487,24 @@
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="car-chassis">Número do Chassi</label>
-                        <input type="text" id="car-chassis" class="form-control" placeholder="Ex: 9BWZZZ99Z99999123" style="text-transform:uppercase;">
+                    <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                        <div>
+                            <label for="car-chassis">Número do Chassi</label>
+                            <input type="text" id="car-chassis" class="form-control" placeholder="Ex: 9BWZZZ..."
+                                style="text-transform:uppercase;">
+                        </div>
+                        <div>
+                            <label for="car-renavam">Renavam</label>
+                            <input type="text" id="car-renavam" class="form-control" placeholder="Ex: 12345678901">
+                        </div>
+                        <div>
+                            <label for="car-document">Documento</label>
+                            <select id="car-document" class="form-control">
+                                <option value="sim">Sim</option>
+                                <option value="nao">Não</option>
+                                <option value="pendente" selected>Pendente</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
@@ -1015,8 +1526,12 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="car-days">Dias em Estoque Inicial</label>
-                        <input type="number" id="car-days" class="form-control" placeholder="Ex: 0" value="0">
+                        <label for="car-purchase-date"><i data-lucide="calendar"
+                                style="width:13px;height:13px;display:inline-block;vertical-align:middle;margin-right:4px;"></i>Data
+                            de Compra do Veículo</label>
+                        <input type="date" id="car-purchase-date" class="form-control">
+                        <small style="color:var(--text-muted);font-size:11px;margin-top:4px;display:block;">Os dias em
+                            estoque serão calculados automaticamente a partir desta data.</small>
                     </div>
                 </form>
             </div>
@@ -1035,7 +1550,8 @@
                 <button class="close-modal-btn" onclick="closeTimelineModal()"><i data-lucide="x"></i></button>
             </div>
             <div class="modal-body">
-                <h4 style="font-size:12px; color:var(--text-muted); margin-bottom:10px; text-transform:uppercase;">Timeline de Contatos</h4>
+                <h4 style="font-size:12px; color:var(--text-muted); margin-bottom:10px; text-transform:uppercase;">
+                    Timeline de Contatos</h4>
                 <div class="timeline-modal-list" id="timeline-events-container">
                     <!-- Eventos gerados no JS -->
                 </div>
@@ -1046,12 +1562,14 @@
                     <input type="hidden" id="interaction-lead-id">
                     <div class="form-group">
                         <label for="interaction-text">Registrar Novo Contato / Ação</label>
-                        <textarea id="interaction-text" class="form-control" style="height: 60px; resize: none;" placeholder="Descreva o que foi conversado..." required></textarea>
+                        <textarea id="interaction-text" class="form-control" style="height: 60px; resize: none;"
+                            placeholder="Descreva o que foi conversado..." required></textarea>
                     </div>
                     <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                         <div>
                             <label for="interaction-next">Próxima Ação</label>
-                            <input type="text" id="interaction-next" class="form-control" placeholder="Ex: Levar carro para teste" required>
+                            <input type="text" id="interaction-next" class="form-control"
+                                placeholder="Ex: Levar carro para teste" required>
                         </div>
                         <div>
                             <label for="interaction-status">Mover de Fase</label>
@@ -1066,7 +1584,8 @@
                             </select>
                         </div>
                     </div>
-                    <button class="btn btn-primary" style="width: 100%; margin-top:8px;" type="submit">Registrar Interação</button>
+                    <button class="btn btn-primary" style="width: 100%; margin-top:8px;" type="submit">Registrar
+                        Interação</button>
                 </form>
             </div>
         </div>
@@ -1084,11 +1603,13 @@
                     <input type="hidden" id="sell-car-id">
                     <div class="form-group">
                         <label>Veículo Selecionado</label>
-                        <input type="text" id="sell-car-name" class="form-control" readonly style="background-color: var(--card-bg); opacity: 0.8;">
+                        <input type="text" id="sell-car-name" class="form-control" readonly
+                            style="background-color: var(--card-bg); opacity: 0.8;">
                     </div>
                     <div class="form-group">
                         <label for="sell-client-name">Nome do Comprador / Cliente</label>
-                        <input type="text" id="sell-client-name" class="form-control" placeholder="Ex: Roberto Alencar" required>
+                        <input type="text" id="sell-client-name" class="form-control" placeholder="Ex: Roberto Alencar"
+                            required>
                     </div>
                     <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                         <div>
@@ -1127,12 +1648,14 @@
                 <form id="form-add-despesa" onsubmit="saveNewDespesa(event)">
                     <div class="form-group">
                         <label for="exp-desc">Descrição do Gasto</label>
-                        <input type="text" id="exp-desc" class="form-control" placeholder="Ex: Polimento cristalizado" required>
+                        <input type="text" id="exp-desc" class="form-control" placeholder="Ex: Polimento cristalizado"
+                            required>
                     </div>
                     <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                         <div>
                             <label for="exp-val">Valor (R$)</label>
-                            <input type="number" id="exp-val" class="form-control" placeholder="Ex: 350" required>
+                            <input type="number" step="0.01" id="exp-val" class="form-control" placeholder="Ex: 350.50"
+                                required>
                         </div>
                         <div>
                             <label for="exp-date">Data</label>
@@ -1175,7 +1698,8 @@
                 <form id="form-add-agenda" onsubmit="saveNewAgenda(event)">
                     <div class="form-group">
                         <label for="age-title">Título do Compromisso</label>
-                        <input type="text" id="age-title" class="form-control" placeholder="Ex: Entrega Jeep Compass" required>
+                        <input type="text" id="age-title" class="form-control" placeholder="Ex: Entrega Jeep Compass"
+                            required>
                     </div>
                     <div class="form-group" style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 12px;">
                         <div>
@@ -1219,87 +1743,44 @@
          NOVOS MODAIS DE EDIÇÃO INTEGRADOS (VERSÃO 2.0)
          ============================================================ -->
 
-    <!-- VISUALIZAR E EDITAR VEÍCULO INTEGRADO -->
-    <div class="modal-overlay" id="modal-edit-car">
-        <div class="modal-content" style="width: 750px; max-width: 95%;">
+    <!-- O modal-edit-car foi removido em favor da edição inline na tela de Detalhes do Veículo -->
+
+    <!-- MODAL NOVO CLIENTE -->
+    <div class="modal-overlay" id="modal-add-client">
+        <div class="modal-content">
             <div class="modal-header">
-                <h3>Detalhes e Edição do Veículo</h3>
-                <button class="close-modal-btn" onclick="closeEditCarModal()"><i data-lucide="x"></i></button>
+                <h3 id="modal-client-title">Novo Cliente / Loja</h3>
+                <button class="close-modal-btn" onclick="closeClientModal()"><i data-lucide="x"></i></button>
             </div>
-            <div class="modal-body" style="padding: 24px;">
-                <form id="form-edit-car" onsubmit="saveEditCar(event)">
-                    <input type="hidden" id="edit-car-id">
-                    
-                    <!-- Galeria Editável -->
-                    <div id="edit-car-gallery" style="margin-bottom: 24px;">
-                        <div style="width: 100%; height: 300px; background-color: var(--panel-bg); border-radius: var(--radius-lg); overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-subtle); position: relative;">
-                            <img id="edit-car-main-img" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;">
-                            <i id="edit-car-no-img-icon" data-lucide="car" style="width: 64px; height: 64px; color: var(--border-subtle);"></i>
-                            <div style="position: absolute; bottom: 12px; right: 12px;">
-                                <label for="edit-car-photo-input" class="btn btn-primary" style="padding: 8px 14px; cursor: pointer; display: flex; gap: 8px; align-items: center; font-size: 12px; border-radius: var(--radius-md); box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
-                                    <i data-lucide="plus"></i> Adicionar Fotos
-                                </label>
-                                <input type="file" id="edit-car-photo-input" accept="image/*" multiple style="display:none;" onchange="previewNewEditPhotos(this)">
-                            </div>
-                        </div>
-                        <div id="edit-car-thumbnails" style="display: flex; gap: 10px; margin-top: 12px; overflow-x: auto; padding-bottom: 8px;">
-                            <!-- Thumbnails geradas pelo JS -->
-                        </div>
-                        <input type="hidden" id="edit-car-current-images">
-                    </div>
-
-                    <!-- Informações Básicas -->
-                    <h4 style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; border-bottom: 1px solid var(--border-subtle); padding-bottom: 6px;">Informações Principais</h4>
+            <div class="modal-body">
+                <form id="form-add-client" onsubmit="saveClient(event)">
+                    <input type="hidden" id="client-id">
                     <div class="form-group">
-                        <label>Marca / Modelo</label>
-                        <input type="text" id="edit-car-brand-model" class="form-control" required style="font-size: 15px; font-weight: 600;">
+                        <label for="client-name">Nome da Loja ou Cliente *</label>
+                        <input type="text" id="client-name" class="form-control" placeholder="Ex: Roberto Multimarcas"
+                            required>
                     </div>
-                    
-                    <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
-                        <div><label>Ano Modelo</label><input type="text" id="edit-car-year" class="form-control" required></div>
-                        <div><label>KM</label><input type="number" id="edit-car-km" class="form-control" required></div>
-                        <div><label>Dias em Estoque</label><input type="number" id="edit-car-days" class="form-control"></div>
+                    <div class="form-group">
+                        <label for="client-doc">CPF ou CNPJ</label>
+                        <input type="text" id="client-doc" class="form-control"
+                            placeholder="Apenas números ou formatado">
                     </div>
-                    
-                    <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
-                        <div><label>Placa</label><input type="text" id="edit-car-plate" class="form-control" style="text-transform:uppercase;"></div>
-                        <div><label>Cor</label><input type="text" id="edit-car-color" class="form-control"></div>
-                        <div><label>Número do Chassi</label><input type="text" id="edit-car-chassis" class="form-control" style="text-transform:uppercase;"></div>
-                    </div>
-
-                    <!-- Financeiro e Status -->
-                    <h4 style="font-size: 13px; color: var(--text-muted); margin-top: 24px; margin-bottom: 12px; text-transform: uppercase; border-bottom: 1px solid var(--border-subtle); padding-bottom: 6px;">Financeiro e Status</h4>
-                    <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                    <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                         <div>
-                            <label>Valor de Compra (Custo Real R$)</label>
-                            <input type="number" id="edit-car-buy-val" class="form-control" style="font-weight: 600; color: var(--text-light);" required>
+                            <label for="client-phone">Telefone / WhatsApp</label>
+                            <input type="text" id="client-phone" class="form-control" placeholder="(00) 00000-0000">
                         </div>
                         <div>
-                            <label>Valor Anunciado (Venda R$)</label>
-                            <input type="number" id="edit-car-sell-val" class="form-control" style="font-weight: 600; color: var(--green-profit);" required>
-                        </div>
-                    </div>
-                    <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-                        <div><label>Tipo de Venda</label>
-                            <select id="edit-car-type" class="form-control">
-                                <option value="convencional">Convencional</option>
-                                <option value="repasse">Repasse</option>
-                            </select>
-                        </div>
-                        <div><label>Status do Veículo</label>
-                            <select id="edit-car-status" class="form-control">
-                                <option value="disponivel">Disponível</option>
-                                <option value="preparacao">Em Preparação</option>
-                                <option value="reservado">Reservado</option>
-                                <option value="vendido">Vendido</option>
-                            </select>
+                            <label for="client-email">E-mail</label>
+                            <input type="email" id="client-email" class="form-control" placeholder="email@loja.com">
                         </div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeEditCarModal()">Cancelar</button>
-                <button class="btn btn-primary" type="submit" form="form-edit-car"><i data-lucide="save"></i> Salvar Alterações</button>
+                <button class="btn btn-secondary" onclick="closeClientModal()">Cancelar</button>
+                <button class="btn btn-primary" type="submit" form="form-add-client"><i data-lucide="save"></i> Salvar
+                    Cliente</button>
             </div>
         </div>
     </div>
@@ -1314,9 +1795,12 @@
             <div class="modal-body">
                 <form id="form-edit-lead" onsubmit="saveEditLead(event)">
                     <input type="hidden" id="edit-lead-id">
-                    <div class="form-group"><label>Nome do Cliente</label><input type="text" id="edit-lead-name" class="form-control" required></div>
-                    <div class="form-group"><label>Telefone / WhatsApp</label><input type="text" id="edit-lead-phone" class="form-control" required></div>
-                    <div class="form-group"><label>Veículo de Interesse</label><select id="edit-lead-interest" class="form-control"></select></div>
+                    <div class="form-group"><label>Nome do Cliente</label><input type="text" id="edit-lead-name"
+                            class="form-control" required></div>
+                    <div class="form-group"><label>Telefone / WhatsApp</label><input type="text" id="edit-lead-phone"
+                            class="form-control" required></div>
+                    <div class="form-group"><label>Veículo de Interesse</label><select id="edit-lead-interest"
+                            class="form-control"></select></div>
                     <div class="form-group"><label>Origem do Lead</label>
                         <select id="edit-lead-origin" class="form-control">
                             <option value="Instagram">Instagram</option>
@@ -1355,14 +1839,19 @@
             <div class="modal-body">
                 <form id="form-edit-venda" onsubmit="saveEditVenda(event)">
                     <input type="hidden" id="edit-venda-id">
-                    <div class="form-group"><label>Nome do Comprador</label><input type="text" id="edit-venda-client" class="form-control" required></div>
+                    <div class="form-group"><label>Nome do Comprador</label><input type="text" id="edit-venda-client"
+                            class="form-control" required></div>
                     <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                        <div><label>Preço de Venda (R$)</label><input type="number" id="edit-venda-price" class="form-control" required></div>
-                        <div><label>Data da Venda</label><input type="date" id="edit-venda-date" class="form-control" required></div>
+                        <div><label>Preço de Venda (R$)</label><input type="number" id="edit-venda-price"
+                                class="form-control" required></div>
+                        <div><label>Data da Venda</label><input type="date" id="edit-venda-date" class="form-control"
+                                required></div>
                     </div>
                     <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                        <div><label>Lucro Real (R$)</label><input type="number" id="edit-venda-profit" class="form-control" required></div>
-                        <div><label>Margem (%)</label><input type="number" id="edit-venda-margin" class="form-control" step="0.1" required></div>
+                        <div><label>Lucro Real (R$)</label><input type="number" id="edit-venda-profit"
+                                class="form-control" required></div>
+                        <div><label>Margem (%)</label><input type="number" id="edit-venda-margin" class="form-control"
+                                step="0.1" required></div>
                     </div>
                     <div class="form-group"><label>Tipo de Venda</label>
                         <select id="edit-venda-type" class="form-control">
@@ -1389,12 +1878,16 @@
             <div class="modal-body">
                 <form id="form-edit-despesa" onsubmit="saveEditDespesa(event)">
                     <input type="hidden" id="edit-exp-id">
-                    <div class="form-group"><label>Descrição</label><input type="text" id="edit-exp-desc" class="form-control" required></div>
+                    <div class="form-group"><label>Descrição</label><input type="text" id="edit-exp-desc"
+                            class="form-control" required></div>
                     <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                        <div><label>Valor (R$)</label><input type="number" id="edit-exp-val" class="form-control" required></div>
-                        <div><label>Data</label><input type="date" id="edit-exp-date" class="form-control" required></div>
+                        <div><label>Valor (R$)</label><input type="number" step="0.01" id="edit-exp-val"
+                                class="form-control" required></div>
+                        <div><label>Data</label><input type="date" id="edit-exp-date" class="form-control" required>
+                        </div>
                     </div>
-                    <div class="form-group"><label>Carro Relacionado</label><select id="edit-exp-car" class="form-control"></select></div>
+                    <div class="form-group"><label>Carro Relacionado</label><select id="edit-exp-car"
+                            class="form-control"></select></div>
                     <div class="form-group"><label>Categoria</label>
                         <select id="edit-exp-cat" class="form-control">
                             <option value="Preparação">Estética & Preparação</option>
@@ -1422,12 +1915,16 @@
             <div class="modal-body">
                 <form id="form-edit-agenda" onsubmit="saveEditAgenda(event)">
                     <input type="hidden" id="edit-age-id">
-                    <div class="form-group"><label>Título</label><input type="text" id="edit-age-title" class="form-control" required></div>
+                    <div class="form-group"><label>Título</label><input type="text" id="edit-age-title"
+                            class="form-control" required></div>
                     <div class="form-group" style="display:grid;grid-template-columns:1.2fr 0.8fr;gap:12px;">
-                        <div><label>Data</label><input type="date" id="edit-age-date" class="form-control" required></div>
-                        <div><label>Horário</label><input type="time" id="edit-age-time" class="form-control" required></div>
+                        <div><label>Data</label><input type="date" id="edit-age-date" class="form-control" required>
+                        </div>
+                        <div><label>Horário</label><input type="time" id="edit-age-time" class="form-control" required>
+                        </div>
                     </div>
-                    <div class="form-group"><label>Carro Relacionado</label><select id="edit-age-car" class="form-control"></select></div>
+                    <div class="form-group"><label>Carro Relacionado</label><select id="edit-age-car"
+                            class="form-control"></select></div>
                     <div class="form-group"><label>Tipo de Atividade</label>
                         <select id="edit-age-cat" class="form-control">
                             <option value="visitas">Visita & Apresentação</option>
@@ -1436,7 +1933,8 @@
                             <option value="documentos">Vistoria ou Cartório</option>
                         </select>
                     </div>
-                    <div class="form-group"><label>Observações / Local</label><input type="text" id="edit-age-desc" class="form-control"></div>
+                    <div class="form-group"><label>Observações / Local</label><input type="text" id="edit-age-desc"
+                            class="form-control"></div>
                 </form>
             </div>
             <div class="modal-footer">
@@ -1448,9 +1946,13 @@
 
     <!-- MODAL DE IMPRESSÃO DE RECIBO PDF (VERSÃO 2.0) -->
     <div class="modal-overlay" id="modal-receipt-print" style="z-index: 10000; backdrop-filter: blur(10px);">
-        <div class="modal-content" style="width: 100%; max-width: 800px; border-radius: var(--radius-lg); overflow: hidden;">
-            <div class="modal-header print-no-show" style="border-bottom: 1px solid var(--border-subtle); padding: 16px 24px;">
-                <h3 style="font-size:16px; font-weight:700;"><i data-lucide="file-check" style="vertical-align:middle; margin-right:8px; color:var(--green-profit)"></i> Recibo de Venda PDF</h3>
+        <div class="modal-content"
+            style="width: 100%; max-width: 800px; border-radius: var(--radius-lg); overflow: hidden;">
+            <div class="modal-header print-no-show"
+                style="border-bottom: 1px solid var(--border-subtle); padding: 16px 24px;">
+                <h3 style="font-size:16px; font-weight:700;"><i data-lucide="file-check"
+                        style="vertical-align:middle; margin-right:8px; color:var(--green-profit)"></i> Recibo de Venda
+                    PDF</h3>
                 <div style="display:flex; gap:10px; margin-left:auto; align-items:center;">
                     <button class="btn btn-success" style="padding:8px 16px; font-size:12px;" onclick="window.print()">
                         <i data-lucide="printer"></i> Imprimir / Salvar PDF
@@ -1468,31 +1970,42 @@
 
     <!-- TELA DE LOGIN (OVERLAY SAAS PREMIUM) -->
     <div class="modal-overlay active" id="login-overlay" style="z-index: 99999; backdrop-filter: blur(20px);">
-        <div class="modal-content" style="width: 420px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); padding: 10px;">
+        <div class="modal-content"
+            style="width: 420px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); padding: 10px;">
             <div class="modal-body" style="max-height: unset; padding: 24px 16px;">
                 <div style="text-align: center; margin-bottom: 24px;">
-                    <div style="background: linear-gradient(135deg, var(--blue-primary), var(--purple-meta)); width: 48px; height: 48px; border-radius: var(--radius-md); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px; box-shadow: var(--shadow-md);">
+                    <div
+                        style="background: linear-gradient(135deg, var(--blue-primary), var(--purple-meta)); width: 48px; height: 48px; border-radius: var(--radius-md); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px; box-shadow: var(--shadow-md);">
                         <i data-lucide="car" style="width: 26px; height: 26px; color: var(--text-light);"></i>
                     </div>
-                    <h2 style="font-size: 20px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 4px;">Acessar AutoDrive CRM</h2>
+                    <h2 style="font-size: 20px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 4px;">Acessar
+                        AutoDrive CRM</h2>
                     <p style="font-size: 12px; color: var(--text-muted);">Insira suas credenciais da nuvem</p>
                 </div>
 
                 <!-- Alerta de Demonstração / Setup -->
-                <div id="login-demo-notice" style="background-color: rgba(37, 99, 235, 0.08); border: 1px solid rgba(37, 99, 235, 0.2); border-radius: var(--radius-md); padding: 14px; margin-bottom: 20px; font-size: 11px; line-height: 1.4; color: var(--text-muted);">
-                    <strong style="color:var(--text-light); display:block; margin-bottom:2px;"><i data-lucide="info" style="width:12px; height:12px; vertical-align:middle; margin-right:4px;"></i> Modo de Demonstração Ativo</strong>
-                    O sistema está rodando localmente. Para ativar a persistência na nuvem (PostgreSQL), configure as chaves do Supabase no topo do seu arquivo <code>app.js</code>. 
-                    <br><button class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 9px; margin-top: 8px; height: auto;" onclick="bypassLoginForDemo()">Entrar no Modo Demo</button>
+                <div id="login-demo-notice"
+                    style="background-color: rgba(37, 99, 235, 0.08); border: 1px solid rgba(37, 99, 235, 0.2); border-radius: var(--radius-md); padding: 14px; margin-bottom: 20px; font-size: 11px; line-height: 1.4; color: var(--text-muted);">
+                    <strong style="color:var(--text-light); display:block; margin-bottom:2px;"><i data-lucide="info"
+                            style="width:12px; height:12px; vertical-align:middle; margin-right:4px;"></i> Modo de
+                        Demonstração Ativo</strong>
+                    O sistema está rodando localmente. Para ativar a persistência na nuvem (PostgreSQL), configure as
+                    chaves do Supabase no topo do seu arquivo <code>app.js</code>.
+                    <br><button class="btn btn-secondary btn-sm"
+                        style="padding: 4px 8px; font-size: 9px; margin-top: 8px; height: auto;"
+                        onclick="bypassLoginForDemo()">Entrar no Modo Demo</button>
                 </div>
 
-                <div id="login-error-message" style="display:none; background-color: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: var(--radius-md); padding: 10px; margin-bottom: 20px; font-size: 12px; color: var(--red-alert);">
+                <div id="login-error-message"
+                    style="display:none; background-color: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: var(--radius-md); padding: 10px; margin-bottom: 20px; font-size: 12px; color: var(--red-alert);">
                     Credenciais incorretas ou erro de comunicação. Tente novamente.
                 </div>
 
                 <form id="form-login" onsubmit="handleLogin(event)">
                     <div class="form-group">
                         <label for="login-email">E-mail</label>
-                        <input type="email" id="login-email" class="form-control" placeholder="exemplo@email.com" required>
+                        <input type="email" id="login-email" class="form-control" placeholder="exemplo@email.com"
+                            required>
                     </div>
                     <div class="form-group" style="margin-bottom: 20px;">
                         <label for="login-password">Senha</label>
@@ -1502,30 +2015,93 @@
                         Iniciar Sessão
                     </button>
                     <p style="margin-top:16px; text-align:center; font-size:12px; color:var(--text-muted);">
-                        Não tem uma conta? <a href="#" id="toggle-signup-link" style="color:var(--blue-primary); font-weight:600; text-decoration:none;">Criar uma conta</a>
+                        Não tem uma conta? <a href="#" id="toggle-signup-link"
+                            style="color:var(--blue-primary); font-weight:600; text-decoration:none;">Criar uma
+                            conta</a>
                     </p>
                 </form>
 
                 <form id="form-signup" style="display:none;" onsubmit="handleSignup(event)">
                     <div class="form-group">
                         <label for="signup-email">E-mail</label>
-                        <input type="email" id="signup-email" class="form-control" placeholder="exemplo@email.com" required>
+                        <input type="email" id="signup-email" class="form-control" placeholder="exemplo@email.com"
+                            required>
                     </div>
                     <div class="form-group">
                         <label for="signup-password">Senha</label>
-                        <input type="password" id="signup-password" class="form-control" placeholder="Mínimo 6 caracteres" required>
+                        <input type="password" id="signup-password" class="form-control"
+                            placeholder="Mínimo 6 caracteres" required>
                     </div>
                     <div class="form-group" style="margin-bottom: 20px;">
                         <label for="signup-confirm-password">Confirmar Senha</label>
-                        <input type="password" id="signup-confirm-password" class="form-control" placeholder="Repita a senha" required>
+                        <input type="password" id="signup-confirm-password" class="form-control"
+                            placeholder="Repita a senha" required>
                     </div>
                     <button class="btn btn-primary" type="submit" style="width: 100%; padding: 12px; font-weight: 700;">
                         Solicitar Acesso
                     </button>
                     <p style="margin-top:16px; text-align:center; font-size:12px; color:var(--text-muted);">
-                        Já tem uma conta? <a href="#" id="toggle-login-link" style="color:var(--blue-primary); font-weight:600; text-decoration:none;">Fazer Login</a>
+                        Já tem uma conta? <a href="#" id="toggle-login-link"
+                            style="color:var(--blue-primary); font-weight:600; text-decoration:none;">Fazer Login</a>
                     </p>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Busca Fipe -->
+    <div class="modal-overlay" id="modal-fipe">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2><i data-lucide="search" style="width:20px;height:20px;margin-right:8px;"></i> Consulta Tabela Fipe
+                </h2>
+                <button class="btn btn-secondary btn-icon" onclick="closeFipeSearchModal()"><i
+                        data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body" style="display:flex; flex-direction:column; gap:16px;">
+                <p style="font-size:13px; color:var(--text-muted); margin-bottom:8px;">Selecione os dados do veículo
+                    para buscar o código e valor oficial na tabela Fipe. Esta busca usa a BrasilAPI.</p>
+                <div class="form-group">
+                    <label>Tipo de Veículo</label>
+                    <select id="fipe-type" class="form-control" onchange="fetchFipeBrands()">
+                        <option value="carros">Carros</option>
+                        <option value="motos">Motos</option>
+                        <option value="caminhoes">Caminhões</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Marca</label>
+                    <select id="fipe-brand" class="form-control" onchange="fetchFipeModels()" disabled>
+                        <option value="">Selecione...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Modelo</label>
+                    <select id="fipe-model" class="form-control" onchange="fetchFipeYears()" disabled>
+                        <option value="">Selecione...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Ano de Referência</label>
+                    <select id="fipe-year" class="form-control" onchange="fetchFipePrice()" disabled>
+                        <option value="">Selecione...</option>
+                    </select>
+                </div>
+
+                <div id="fipe-result"
+                    style="display:none; padding:16px; background:rgba(37,99,235,0.1); border:1px solid rgba(37,99,235,0.3); border-radius:8px; margin-top:8px;">
+                    <div style="font-size:12px; color:var(--text-muted);">Mês de Referência: <span id="fipe-res-month"
+                            style="color:#FFF;">-</span></div>
+                    <div style="font-size:12px; color:var(--text-muted);">Código Fipe: <span id="fipe-res-code"
+                            style="color:#FFF;">-</span></div>
+                    <div style="font-size:20px; font-weight:700; color:var(--blue-primary); margin-top:8px;"
+                        id="fipe-res-price">R$ 0,00</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeFipeSearchModal()">Cancelar</button>
+                <button class="btn btn-primary" id="btn-apply-fipe" onclick="applyFipeResult()" disabled>Aplicar
+                    Valor</button>
             </div>
         </div>
     </div>
@@ -1533,4 +2109,5 @@
     <!-- JS Principal da Aplicação -->
     <script src="app.js"></script>
 </body>
+
 </html>
