@@ -8,3 +8,8 @@ desktop.ini
 
 # Node
 node_modules/
+
+# Auto agent / workspace logs
+"Auto agent"/
+Auto agent/
+
