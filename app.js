@@ -1315,6 +1315,15 @@ async function saveCarDetails() {
     const sellPrice = parseCurrencyBR(document.getElementById("cd-sell").value);
     const type = document.getElementById("cd-type").value;
     const status = document.getElementById("cd-status-select").value;
+    const existingCar = estoque.find(c => c.id === currentCdCarId);
+    if (status === 'vendido' && (!existingCar || existingCar.status !== 'vendido')) {
+        alert("Para marcar o carro como vendido e registrá-lo no fechamento e fluxo de caixa, utilize a seção 'Movimentação e Venda' na lateral direita.");
+        document.getElementById("cd-status-select").value = existingCar ? existingCar.status : 'disponivel';
+        updateDetailsStatusBadge();
+        btn.innerHTML = `<i data-lucide="save" style="width:14px;height:14px;margin-right:6px;"></i>Salvar Alterações`;
+        lucide.createIcons();
+        return;
+    }
     const purchaseDate = document.getElementById("cd-purchase-date").value || null;
     const plate = document.getElementById("cd-plate").value.toUpperCase();
     const color = document.getElementById("cd-color").value;
