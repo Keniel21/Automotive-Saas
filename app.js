@@ -1705,14 +1705,26 @@ async function saveEditVenda(event) {
 }
 
 async function deleteVendaConfirm(vendaId) {
-    if (!confirm("Excluir esta venda do histÃƒÂ³rico? Esta aÃƒÂ§ÃƒÂ£o nÃƒÂ£o pode ser desfeita.")) return;
+    if (!confirm("Excluir esta venda e reverter o veículo para disponível no estoque? Esta ação não pode ser desfeita.")) return;
+
+    // Identifica o carro vinculado à venda antes de excluí-la
+    const venda = vendas.find(v => v.id === vendaId);
+    const carId = venda ? venda.carId : null;
+
     if (isCloudActive) {
         try {
             await supabaseClient.from('vendas').delete().eq('id', vendaId);
+            if (carId) {
+                await supabaseClient.from('estoque').update({ status: 'disponivel' }).eq('id', carId);
+            }
             await fetchCloudData();
         } catch (e) { console.error(e); }
     } else {
         vendas = vendas.filter(v => v.id !== vendaId);
+        if (carId) {
+            const car = estoque.find(c => c.id === carId);
+            if (car) car.status = 'disponivel';
+        }
         persistLocalData();
     }
     updateApplicationState();
