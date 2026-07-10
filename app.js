@@ -2363,7 +2363,7 @@ async function confirmCarSale(event) {
     const car = estoque.find(c => c.id === carId);
     if (!car) return;
 
-    const sellPrice = parseFloat(document.getElementById("cd-sell").value) || car.sellPrice;
+    const sellPrice = parseCurrencyBR(document.getElementById("cd-sell").value) || car.sellPrice;
 
     const despesasCarro = despesas.filter(d => d.carId === carId).reduce((sum, d) => sum + d.val, 0);
     const profit = sellPrice - car.buyPrice - despesasCarro;
