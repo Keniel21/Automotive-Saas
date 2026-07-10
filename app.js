@@ -2371,15 +2371,35 @@ async function confirmCarSale(event) {
 
     if (isCloudActive) {
         try {
-            await supabaseClient.from('estoque').update({ status: 'vendido', sell_price: sellPrice }).eq('id', carId);
-            await supabaseClient.from('vendas').insert({ car_id: carId, client, client_document: documentStr, sell_price: sellPrice, date, profit, margin, type });
+            // 1. Marca o carro como vendido
+            const { error: errUpdate } = await supabaseClient.from('estoque').update({ status: 'vendido', sell_price: sellPrice }).eq('id', carId);
+            if (errUpdate) {
+                alert("Erro ao atualizar o estoque: " + errUpdate.message);
+                return;
+            }
+
+            // 2. Insere a transação de venda
+            const { error: errInsert } = await supabaseClient.from('vendas').insert({ car_id: carId, client, client_document: documentStr, sell_price: sellPrice, date, profit, margin, type });
+            if (errInsert) {
+                // Rollback: reverte o status do carro se a venda falhar
+                await supabaseClient.from('estoque').update({ status: 'disponivel' }).eq('id', carId);
+                alert("Erro ao registrar a venda: " + errInsert.message + "\nO veículo foi mantido como disponível.");
+                await fetchCloudData();
+                updateApplicationState();
+                return;
+            }
+
+            // 3. Fecha lead vinculado (se existir)
             const lead = leads.find(l => l.interestCarId === carId && l.status !== 'fechado');
             if (lead) {
                 await supabaseClient.from('leads').update({ status: 'fechado' }).eq('id', lead.id);
                 await supabaseClient.from('interactions').insert({ lead_id: lead.id, date: 'Hoje', text: `Venda formalizada! Valor de R$ ${sellPrice.toLocaleString('pt-BR')}` });
             }
             await fetchCloudData();
-        } catch (e) { console.error(e); }
+        } catch (e) {
+            console.error(e);
+            alert("Erro inesperado ao processar a venda. Verifique os dados e tente novamente.");
+        }
     } else {
         car.status = 'vendido';
         car.sellPrice = sellPrice;
