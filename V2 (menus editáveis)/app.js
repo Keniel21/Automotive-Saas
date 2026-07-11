@@ -2246,11 +2246,29 @@ async function saveNewCar(event) {
     const type = document.getElementById("car-type").value;
     const status = document.getElementById("car-status").value;
     const purchaseDate = document.getElementById("car-purchase-date").value || null;
-    const plate = document.getElementById("car-plate").value.toUpperCase();
+    const plate = document.getElementById("car-plate").value.toUpperCase().trim();
     const color = document.getElementById("car-color").value;
-    const chassis = document.getElementById("car-chassis").value.toUpperCase();
-    const renavam = document.getElementById("car-renavam").value;
+    const chassis = document.getElementById("car-chassis").value.toUpperCase().trim();
+    const renavam = document.getElementById("car-renavam").value.trim();
     const documentStatus = document.getElementById("car-document").value;
+
+    // --- Verificação de duplicatas ---
+    if (plate) {
+        const duplicatePlate = estoque.find(c => c.plate && c.plate.toUpperCase().replace(/[^A-Z0-9]/g, '') === plate.replace(/[^A-Z0-9]/g, ''));
+        if (duplicatePlate) {
+            const statusLabel = duplicatePlate.status === 'vendido' ? ' (vendido)' : '';
+            alert(`Veículo com placa "${plate}" já está cadastrado:\n\n${duplicatePlate.model}${statusLabel}\n\nCadastro cancelado para evitar duplicidade.`);
+            return;
+        }
+    }
+    if (chassis) {
+        const duplicateChassis = estoque.find(c => c.chassis && c.chassis.toUpperCase().replace(/[^A-Z0-9]/g, '') === chassis.replace(/[^A-Z0-9]/g, ''));
+        if (duplicateChassis) {
+            const statusLabel = duplicateChassis.status === 'vendido' ? ' (vendido)' : '';
+            alert(`Veículo com chassi "${chassis}" já está cadastrado:\n\n${duplicateChassis.model}${statusLabel}\n\nCadastro cancelado para evitar duplicidade.`);
+            return;
+        }
+    }
 
     // Foto Upload
     const photoInput = document.getElementById("car-photo-input");
@@ -2261,10 +2279,14 @@ async function saveNewCar(event) {
 
     if (isCloudActive) {
         try {
-            await supabaseClient.from('estoque').insert({
+            const { error } = await supabaseClient.from('estoque').insert({
                 model, year, km, buy_price: buyPrice, sell_price: sellPrice, type, status,
                 purchase_date: purchaseDate, plate, color, chassis, renavam, document_status: documentStatus, image_url: imageUrl
             });
+            if (error) {
+                alert("Erro ao cadastrar veículo: " + error.message);
+                return;
+            }
             await fetchCloudData();
         } catch (e) { console.error(e); }
     } else {
