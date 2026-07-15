@@ -82,7 +82,7 @@ let chartGiroEstoqueInstance = null;
 let chartFinanceInstance = null;
 let leadViewMode = 'kanban';
 let documentosVeiculo = [];
-let pendingDocFile = null;
+let pendingDocFiles = [];
 
 // --------------------------------------------------------------------------
 // C. INICIALIZAÃƒâ€¡ÃƒÆ’O
@@ -3252,45 +3252,57 @@ function applyFipeResult() {
 
 function handleDocFileSelected(input) {
     if (!input.files || input.files.length === 0) return;
-    const file = input.files[0];
 
-    // Validação de tipo
     const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg'];
-    if (!allowedTypes.includes(file.type)) {
-        alert("Tipo de arquivo não permitido. Apenas PDF e JPG são aceitos.");
-        input.value = '';
-        return;
+    pendingDocFiles = [];
+
+    for (let i = 0; i < input.files.length; i++) {
+        const file = input.files[i];
+        
+        // Validação de tipo
+        if (!allowedTypes.includes(file.type)) {
+            alert(`O arquivo "${file.name}" não é permitido. Apenas PDF e JPG são aceitos.`);
+            input.value = '';
+            pendingDocFiles = [];
+            return;
+        }
+
+        // Validação de tamanho (5 MB)
+        if (file.size > 5 * 1024 * 1024) {
+            alert(`O arquivo "${file.name}" é muito grande. O limite é de 5 MB por arquivo.`);
+            input.value = '';
+            pendingDocFiles = [];
+            return;
+        }
+        
+        pendingDocFiles.push(file);
     }
 
-    // Validação de tamanho (5 MB)
-    if (file.size > 5 * 1024 * 1024) {
-        alert("Arquivo muito grande. O limite é de 5 MB por arquivo.");
-        input.value = '';
-        return;
+    if (pendingDocFiles.length === 1) {
+        document.getElementById('cd-doc-file-name').innerText = pendingDocFiles[0].name;
+    } else {
+        document.getElementById('cd-doc-file-name').innerText = `${pendingDocFiles.length} arquivos selecionados`;
     }
-
-    pendingDocFile = file;
-    document.getElementById('cd-doc-file-name').innerText = file.name;
+    
     document.getElementById('cd-doc-description').value = '';
     document.getElementById('cd-doc-upload-form').style.display = 'block';
     lucide.createIcons();
 }
 
 function cancelDocUpload() {
-    pendingDocFile = null;
+    pendingDocFiles = [];
     document.getElementById('cd-doc-upload-form').style.display = 'none';
     document.getElementById('cd-doc-file-input').value = '';
 }
 
 async function confirmDocUpload() {
-    if (!pendingDocFile || !currentCdCarId) return;
+    if (!pendingDocFiles || pendingDocFiles.length === 0 || !currentCdCarId) return;
     if (!isCloudActive) {
         alert("O upload de documentos requer conexão com a nuvem (Supabase).");
         return;
     }
 
     const description = document.getElementById('cd-doc-description').value.trim();
-    const file = pendingDocFile;
 
     // Mostra loading
     const btn = document.querySelector('#cd-doc-upload-form .btn-success');
@@ -3300,54 +3312,49 @@ async function confirmDocUpload() {
     lucide.createIcons();
 
     try {
-        // 1. Upload para Supabase Storage
-        const fileExt = file.name.split('.').pop().toLowerCase();
-        const fileName = `doc-${currentCdCarId}-${Date.now()}-${Math.random().toString(36).substring(2, 6)}.${fileExt}`;
+        for (let i = 0; i < pendingDocFiles.length; i++) {
+            const file = pendingDocFiles[i];
+            const fileExt = file.name.split('.').pop().toLowerCase();
+            const fileName = `doc-${currentCdCarId}-${Date.now()}-${Math.random().toString(36).substring(2, 6)}.${fileExt}`;
 
-        const { data: uploadData, error: uploadError } = await supabaseClient.storage
-            .from('documentos')
-            .upload(fileName, file);
+            const { data: uploadData, error: uploadError } = await supabaseClient.storage
+                .from('documentos')
+                .upload(fileName, file);
 
-        if (uploadError) {
-            alert("Erro no upload: " + uploadError.message);
-            btn.innerHTML = originalBtnHTML;
-            btn.disabled = false;
-            lucide.createIcons();
-            return;
+            if (uploadError) {
+                console.error("Erro no upload do arquivo " + file.name + ":", uploadError.message);
+                continue; // Pula para o próximo em caso de erro
+            }
+
+            const { data: publicUrlData } = supabaseClient.storage
+                .from('documentos')
+                .getPublicUrl(fileName);
+
+            const fileUrl = publicUrlData.publicUrl;
+
+            // Se for múltiplos arquivos e tiver descrição, anexa o nome original para diferenciar
+            let finalDesc = description;
+            if (pendingDocFiles.length > 1 && description) {
+                finalDesc = `${description} (${file.name})`;
+            }
+
+            await supabaseClient.from('documentos_veiculo').insert({
+                car_id: currentCdCarId,
+                file_name: file.name,
+                file_url: fileUrl,
+                file_type: file.type,
+                description: finalDesc
+            });
         }
 
-        // 2. Obtém URL pública
-        const { data: publicUrlData } = supabaseClient.storage
-            .from('documentos')
-            .getPublicUrl(fileName);
-
-        const fileUrl = publicUrlData.publicUrl;
-
-        // 3. Insere metadados na tabela
-        const { error: insertError } = await supabaseClient.from('documentos_veiculo').insert({
-            car_id: currentCdCarId,
-            file_name: file.name,
-            file_url: fileUrl,
-            file_type: file.type,
-            description: description
-        });
-
-        if (insertError) {
-            alert("Erro ao salvar documento: " + insertError.message);
-            btn.innerHTML = originalBtnHTML;
-            btn.disabled = false;
-            lucide.createIcons();
-            return;
-        }
-
-        // 4. Atualiza estado
+        // Atualiza estado após todos os uploads
         await fetchCloudData();
         renderCarDocuments(currentCdCarId);
         cancelDocUpload();
 
     } catch (e) {
         console.error("Erro no upload de documento:", e);
-        alert("Erro inesperado ao enviar documento.");
+        alert("Erro inesperado ao enviar documentos.");
     }
 
     btn.innerHTML = originalBtnHTML;
