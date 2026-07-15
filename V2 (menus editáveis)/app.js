@@ -325,7 +325,8 @@ async function fetchCloudData() {
             documentStatus: c.document_status || "pendente",
             image_url: c.image_url || null,
             fipeCode: c.fipe_code || "",
-            fipePrice: c.fipe_price || 0
+            fipePrice: c.fipe_price || 0,
+            notes: c.notes || ""
         }));
 
         const { data: ven } = await supabaseClient.from('vendas').select('*').order('date', { ascending: false });
