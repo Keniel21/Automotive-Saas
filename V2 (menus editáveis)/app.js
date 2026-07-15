@@ -1044,6 +1044,9 @@ function openCarDetails(carId) {
         document.getElementById('cd-fipe-price').value = '';
     }
 
+    // Popula Anotações / Comentários
+    document.getElementById('cd-notes').value = car.notes || '';
+
     // Popula Financeiro (Inputs) com formatação R$
     document.getElementById('cd-buy').value = car.buyPrice ? formatNumberBR(car.buyPrice) : '';
     document.getElementById('cd-sell').value = car.sellPrice ? formatNumberBR(car.sellPrice) : '';
@@ -1338,6 +1341,7 @@ async function saveCarDetails() {
     const chassis = document.getElementById("cd-chassis").value.toUpperCase();
     const renavam = document.getElementById("cd-renavam").value;
     const documentStatus = document.getElementById("cd-document").value;
+    const notes = document.getElementById("cd-notes").value.trim();
     const fipeCode = document.getElementById("cd-fipe-code").value;
 
     // Parse fipePrice stripping R$ and dots
@@ -1359,13 +1363,13 @@ async function saveCarDetails() {
             await supabaseClient.from('estoque').update({
                 model, year, km, buy_price: buyPrice, sell_price: sellPrice, type, status,
                 purchase_date: purchaseDate, plate, color, chassis, renavam, document_status: documentStatus, image_url: imageUrl,
-                fipe_code: fipeCode, fipe_price: fipePrice
+                fipe_code: fipeCode, fipe_price: fipePrice, notes: notes
             }).eq('id', currentCdCarId);
             await fetchCloudData();
         } catch (e) { console.error(e); }
     } else {
         const car = estoque.find(c => c.id === currentCdCarId);
-        if (car) Object.assign(car, { model, year, km, buyPrice, sellPrice, type, status, purchaseDate, plate, color, chassis, renavam, documentStatus, image_url: imageUrl, fipeCode, fipePrice });
+        if (car) Object.assign(car, { model, year, km, buyPrice, sellPrice, type, status, purchaseDate, plate, color, chassis, renavam, documentStatus, image_url: imageUrl, fipeCode, fipePrice, notes });
         persistLocalData();
     }
 
