@@ -631,6 +631,41 @@
                             </div>
                         </div>
 
+                        <div class="car-details-card table-card" id="cd-documents-card"
+                            style="margin-top: 24px;">
+                            <div
+                                style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                                <h3 style="font-size: 16px; margin: 0;"><i data-lucide="paperclip"
+                                        style="width:16px;height:16px;vertical-align:middle;margin-right:6px;color:var(--accent-primary);"></i>
+                                    Documentos do Veículo</h3>
+                                <label for="cd-doc-file-input" class="btn btn-primary btn-sm"
+                                    style="padding:4px 8px; font-size:12px; cursor:pointer;"><i data-lucide="upload"
+                                        style="width:14px;height:14px;"></i> Anexar</label>
+                                <input type="file" id="cd-doc-file-input" accept=".pdf,.jpg,.jpeg,image/jpeg,application/pdf"
+                                    style="display:none;" onchange="handleDocFileSelected(this)">
+                            </div>
+                            <!-- Formulário de descrição (aparece após selecionar arquivo) -->
+                            <div id="cd-doc-upload-form" style="display:none; margin-bottom:16px; padding:12px; background:rgba(255,255,255,0.03); border-radius:8px; border:1px dashed rgba(255,255,255,0.1);">
+                                <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                                    <i data-lucide="file-text" style="width:16px;height:16px;color:var(--accent-primary);"></i>
+                                    <span id="cd-doc-file-name" style="font-size:13px; color:var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
+                                </div>
+                                <input type="text" class="inline-edit-input" id="cd-doc-description"
+                                    placeholder="Descrição (ex: CRLV 2026, Laudo Cautelar...)"
+                                    style="width:100%; margin-bottom:10px; font-size:13px; padding:8px;">
+                                <div style="display:flex; gap:8px; justify-content:flex-end;">
+                                    <button class="btn btn-secondary" style="padding:6px 12px; font-size:12px;"
+                                        onclick="cancelDocUpload()">Cancelar</button>
+                                    <button class="btn btn-success" style="padding:6px 12px; font-size:12px;"
+                                        onclick="confirmDocUpload()"><i data-lucide="upload-cloud"
+                                            style="width:14px;height:14px;margin-right:4px;"></i>Enviar</button>
+                                </div>
+                            </div>
+                            <div id="cd-documents-list" style="max-height:240px; overflow-y:auto; padding-right:4px;">
+                                <!-- Preenchido dinamicamente -->
+                            </div>
+                        </div>
+
                         <div class="car-details-card table-card" id="cd-sale-card"
                             style="margin-top: 24px; border: 1px solid var(--green-profit); flex: 1; display: flex; flex-direction: column;">
                             <h3 style="margin-bottom: 20px; font-size: 16px; color: var(--green-profit);"><i

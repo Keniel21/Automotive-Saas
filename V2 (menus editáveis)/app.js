@@ -81,6 +81,8 @@ let chartLeadsOriginInstance = null;
 let chartGiroEstoqueInstance = null;
 let chartFinanceInstance = null;
 let leadViewMode = 'kanban';
+let documentosVeiculo = [];
+let pendingDocFile = null;
 
 // --------------------------------------------------------------------------
 // C. INICIALIZAÃƒâ€¡ÃƒÆ’O
@@ -346,6 +348,9 @@ async function fetchCloudData() {
                 leads.push({ id: l.id, name: l.name, phone: l.phone, interestCarId: l.interest_car_id, origin: l.origin, status: l.status, lastContactDays: l.last_contact_days, nextAction: l.next_action, interactions: ints || [] });
             }
         }
+
+        const { data: docs } = await supabaseClient.from('documentos_veiculo').select('*').order('created_at', { ascending: false });
+        if (docs) documentosVeiculo = docs.map(d => ({ id: d.id, carId: d.car_id, fileName: d.file_name, fileUrl: d.file_url, fileType: d.file_type, description: d.description, createdAt: d.created_at }));
     } catch (e) {
         console.error("Falha ao sincronizar dados da nuvem: ", e);
     }
@@ -1053,10 +1058,13 @@ function openCarDetails(carId) {
     // Recalcula cÃƒÂ¡lculos read-only (Lucro, Margem, Dias)
     calculateDetailsFinancials();
 
-    // Renderiza gastos do veÃƒÂ­culo
+    // Renderiza gastos do veículo
     renderCarExpenses(carId);
 
-    // MovimentaÃƒÂ§ÃƒÂ£o e Venda Card
+    // Renderiza documentos do veículo
+    renderCarDocuments(carId);
+
+    // Movimentação e Venda Card
     const saleCard = document.getElementById('cd-sale-card');
     const sellBtnHeader = document.getElementById('cd-btn-sell');
     if (car.status === 'vendido') {
@@ -3236,4 +3244,176 @@ function applyFipeResult() {
     document.getElementById('cd-fipe-price').value = btn.dataset.fipePrice;
     saveCarDetails();
     closeFipeSearchModal();
+}
+
+// --------------------------------------------------------------------------
+// DOCUMENTOS DO VEÍCULO (UPLOAD, RENDER, DELETE)
+// --------------------------------------------------------------------------
+
+function handleDocFileSelected(input) {
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+
+    // Validação de tipo
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg'];
+    if (!allowedTypes.includes(file.type)) {
+        alert("Tipo de arquivo não permitido. Apenas PDF e JPG são aceitos.");
+        input.value = '';
+        return;
+    }
+
+    // Validação de tamanho (5 MB)
+    if (file.size > 5 * 1024 * 1024) {
+        alert("Arquivo muito grande. O limite é de 5 MB por arquivo.");
+        input.value = '';
+        return;
+    }
+
+    pendingDocFile = file;
+    document.getElementById('cd-doc-file-name').innerText = file.name;
+    document.getElementById('cd-doc-description').value = '';
+    document.getElementById('cd-doc-upload-form').style.display = 'block';
+    lucide.createIcons();
+}
+
+function cancelDocUpload() {
+    pendingDocFile = null;
+    document.getElementById('cd-doc-upload-form').style.display = 'none';
+    document.getElementById('cd-doc-file-input').value = '';
+}
+
+async function confirmDocUpload() {
+    if (!pendingDocFile || !currentCdCarId) return;
+    if (!isCloudActive) {
+        alert("O upload de documentos requer conexão com a nuvem (Supabase).");
+        return;
+    }
+
+    const description = document.getElementById('cd-doc-description').value.trim();
+    const file = pendingDocFile;
+
+    // Mostra loading
+    const btn = document.querySelector('#cd-doc-upload-form .btn-success');
+    const originalBtnHTML = btn.innerHTML;
+    btn.innerHTML = '<i data-lucide="loader" class="spin" style="width:14px;height:14px;margin-right:4px;"></i>Enviando...';
+    btn.disabled = true;
+    lucide.createIcons();
+
+    try {
+        // 1. Upload para Supabase Storage
+        const fileExt = file.name.split('.').pop().toLowerCase();
+        const fileName = `doc-${currentCdCarId}-${Date.now()}-${Math.random().toString(36).substring(2, 6)}.${fileExt}`;
+
+        const { data: uploadData, error: uploadError } = await supabaseClient.storage
+            .from('documentos')
+            .upload(fileName, file);
+
+        if (uploadError) {
+            alert("Erro no upload: " + uploadError.message);
+            btn.innerHTML = originalBtnHTML;
+            btn.disabled = false;
+            lucide.createIcons();
+            return;
+        }
+
+        // 2. Obtém URL pública
+        const { data: publicUrlData } = supabaseClient.storage
+            .from('documentos')
+            .getPublicUrl(fileName);
+
+        const fileUrl = publicUrlData.publicUrl;
+
+        // 3. Insere metadados na tabela
+        const { error: insertError } = await supabaseClient.from('documentos_veiculo').insert({
+            car_id: currentCdCarId,
+            file_name: file.name,
+            file_url: fileUrl,
+            file_type: file.type,
+            description: description
+        });
+
+        if (insertError) {
+            alert("Erro ao salvar documento: " + insertError.message);
+            btn.innerHTML = originalBtnHTML;
+            btn.disabled = false;
+            lucide.createIcons();
+            return;
+        }
+
+        // 4. Atualiza estado
+        await fetchCloudData();
+        renderCarDocuments(currentCdCarId);
+        cancelDocUpload();
+
+    } catch (e) {
+        console.error("Erro no upload de documento:", e);
+        alert("Erro inesperado ao enviar documento.");
+    }
+
+    btn.innerHTML = originalBtnHTML;
+    btn.disabled = false;
+    lucide.createIcons();
+}
+
+function renderCarDocuments(carId) {
+    const container = document.getElementById('cd-documents-list');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const docs = documentosVeiculo.filter(d => d.carId === carId);
+
+    if (docs.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding:24px; color:var(--text-muted); font-size:13px;">
+            <i data-lucide="file-x" style="width:24px;height:24px;margin-bottom:8px;opacity:0.5;"></i>
+            <p style="margin:0;">Nenhum documento anexado</p>
+        </div>`;
+        lucide.createIcons();
+        return;
+    }
+
+    docs.forEach(doc => {
+        const isPdf = doc.fileType === 'application/pdf';
+        const iconName = isPdf ? 'file-text' : 'image';
+        const typeLabel = isPdf ? 'PDF' : 'JPG';
+        const dateStr = doc.createdAt ? new Date(doc.createdAt).toLocaleDateString('pt-BR') : '';
+
+        const row = document.createElement('div');
+        row.className = 'cd-doc-row';
+        row.innerHTML = `
+            <div class="cd-doc-icon ${isPdf ? 'pdf' : 'img'}">
+                <i data-lucide="${iconName}"></i>
+            </div>
+            <div class="cd-doc-info" style="flex:1; min-width:0;">
+                <a href="${doc.fileUrl}" target="_blank" rel="noopener" class="cd-doc-name" title="${doc.fileName}">${doc.description || doc.fileName}</a>
+                <span class="cd-doc-meta">${typeLabel} · ${dateStr}${doc.description && doc.fileName !== doc.description ? ' · ' + doc.fileName : ''}</span>
+            </div>
+            <button class="btn" style="padding:4px;background:transparent;border:none;color:var(--red-alert);cursor:pointer;" onclick="deleteCarDocument(${doc.id}, '${doc.fileUrl.split('/').pop()}')" title="Excluir documento">
+                <i data-lucide="trash-2" style="width:14px;height:14px;"></i>
+            </button>
+        `;
+        container.appendChild(row);
+    });
+    lucide.createIcons();
+}
+
+async function deleteCarDocument(docId, storagePath) {
+    if (!confirm("Excluir este documento? Esta ação não pode ser desfeita.")) return;
+    if (!isCloudActive) return;
+
+    try {
+        // Remove do storage
+        await supabaseClient.storage.from('documentos').remove([storagePath]);
+
+        // Remove da tabela
+        const { error } = await supabaseClient.from('documentos_veiculo').delete().eq('id', docId);
+        if (error) {
+            alert("Erro ao excluir documento: " + error.message);
+            return;
+        }
+
+        await fetchCloudData();
+        renderCarDocuments(currentCdCarId);
+    } catch (e) {
+        console.error("Erro ao excluir documento:", e);
+    }
 }
