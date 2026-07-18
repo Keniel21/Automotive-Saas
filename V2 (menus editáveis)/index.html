@@ -415,219 +415,170 @@
 
             <div id="estoque-grid-view" class="estoque-grid" style="display:none;">
                 <!-- Gerado Dinamicamente por app.js -->
-            </div>
-        </section>
-
-        <!-- ==========================================
-             ABA DE DETALHES DO VEÍCULO (TELA CHEIA)
-             ========================================== -->
-        <section id="car-details-tab" class="tab-pane">
+<section id="car-details-tab" class="tab-pane">
             <div class="car-details-container new-layout">
                 <!-- Cabeçalho Redesenhado -->
                 <div class="car-details-header-bar">
                     <div class="cd-header-left">
-                        <button class="btn btn-secondary cd-back-btn" onclick="closeCarDetails()"
-                            title="Voltar para Estoque"><i data-lucide="arrow-left"></i></button>
+                        <button class="btn btn-secondary cd-back-btn" onclick="closeCarDetails()" title="Voltar para Estoque"><i data-lucide="arrow-left"></i></button>
                         <div class="cd-title-wrap">
                             <h2 class="car-details-title" id="cd-title">Veículo</h2>
                             <span id="cd-status" class="badge">Status</span>
                         </div>
                     </div>
-
                     <div class="cd-header-center">
-                        <div class="cd-quick-stat">
-                            <span class="cd-stat-label">Ano / Modelo</span>
-                            <span class="cd-stat-val" id="cd-summary-year">-</span>
-                        </div>
-                        <div class="cd-quick-stat">
-                            <span class="cd-stat-label">Quilometragem</span>
-                            <span class="cd-stat-val" id="cd-summary-km">-</span>
-                        </div>
-                        <div class="cd-quick-stat">
-                            <span class="cd-stat-label">Tipo de Venda</span>
-                            <span class="cd-stat-val" id="cd-summary-type" style="text-transform: capitalize;">-</span>
-                        </div>
+                        <div class="cd-quick-stat"><span class="cd-stat-label">Ano / Modelo</span><span class="cd-stat-val" id="cd-summary-year">-</span></div>
+                        <div class="cd-quick-stat"><span class="cd-stat-label">KM</span><span class="cd-stat-val" id="cd-summary-km">-</span></div>
+                        <div class="cd-quick-stat"><span class="cd-stat-label">Venda</span><span class="cd-stat-val" id="cd-summary-type" style="text-transform: capitalize;">-</span></div>
                     </div>
-
                     <div class="cd-header-right">
                         <div class="cd-price-wrap">
-                            <span class="cd-price-label">Preço de Venda</span>
+                            <span class="cd-price-label">Preço</span>
                             <span class="cd-price-val" id="cd-summary-price">R$ 0,00</span>
                         </div>
                         <div class="car-details-actions">
-                            <button class="btn btn-primary" id="cd-btn-save" onclick="saveCarDetails()"><i
-                                    data-lucide="save"
-                                    style="width:14px;height:14px;margin-right:6px;"></i>Salvar</button>
-                            <button class="btn btn-success" id="cd-btn-sell"
-                                onclick="document.getElementById('cd-sale-card').scrollIntoView({behavior: 'smooth'})"><i
-                                    data-lucide="badge-dollar-sign"
-                                    style="width:14px;height:14px;margin-right:6px;"></i>Vender</button>
+                            <button class="btn btn-primary" id="cd-btn-save" onclick="saveCarDetails()"><i data-lucide="save" style="width:14px;height:14px;margin-right:6px;"></i>Salvar</button>
+                            <button class="btn btn-success" id="cd-btn-sell" onclick="switchCarDetailsTab('docs')"><i data-lucide="badge-dollar-sign" style="width:14px;height:14px;margin-right:6px;"></i>Vender</button>
                         </div>
                     </div>
                 </div>
 
-                <div class="car-details-content-grid">
-                    <!-- Esquerda: Galeria e Ficha Técnica -->
-                    <div class="car-details-left-col">
-                        <!-- Galeria Estilo Hero -->
-                        <div class="car-details-gallery hero-layout">
-                            <div class="cd-main-img-wrap">
-                                <img src="" alt="Imagem do Carro" id="cd-main-img" class="car-details-main-img"
-                                    onerror="this.style.display='none'; document.getElementById('cd-no-img').style.display='flex'">
-                                <div id="cd-no-img" class="cd-no-img-box">
-                                    <i data-lucide="image-off"></i>
-                                    <span>Sem imagens disponíveis</span>
-                                </div>
-                            </div>
-                            <div class="cd-thumbs-wrap">
-                                <div class="car-details-thumbs vertical" id="cd-thumbs">
-                                    <!-- Preenchido dinamicamente -->
-                                </div>
-                                <label for="cd-photo-input" class="btn btn-secondary cd-add-photo-btn">
-                                    <i data-lucide="image-plus"></i> <span class="hide-on-mobile">Adicionar Fotos</span>
-                                </label>
-                                <input type="file" id="cd-photo-input" accept="image/*" multiple style="display:none;"
-                                    onchange="previewDetailsPhotos(this)">
-                            </div>
-                        </div>
+                <div class="cd-tabs-nav">
+                    <button class="cd-mobile-tab-btn active" onclick="switchCarDetailsTab('geral')">Ficha & Galeria</button>
+                    <button class="cd-mobile-tab-btn" onclick="switchCarDetailsTab('fin')">Gestão Financeira</button>
+                    <button class="cd-mobile-tab-btn" onclick="switchCarDetailsTab('docs')">Movimentação & Docs</button>
+                </div>
 
-                        <!-- Ficha Técnica Estilo Overview e Gastos (Wrapper) -->
-                        <div class="car-overview-and-expenses-wrapper"
-                            style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px; flex: 1;">
-                            <!-- Financeiro e Margem (Movido) -->
-                            <div class="car-details-card table-card"
-                                style="margin-top: 0; padding: 32px; display: flex; flex-direction: column;">
-                                <h3 style="margin-bottom: 20px; font-size: 16px;">Financeiro e Margem</h3>
-                                <div class="fin-table" style="flex:1;">
-                                    <div class="fin-row">
-                                        <span class="fin-label">Preço de Custo (R$)</span>
-                                        <input type="text" class="inline-edit-input fin-input dimmed" id="cd-buy"
-                                            oninput="formatCurrencyInput(this); calculateDetailsFinancials()">
-                                    </div>
-                                    <div class="fin-row highlight-row">
-                                        <span class="fin-label">Preço de Venda (R$)</span>
-                                        <input type="text" class="inline-edit-input fin-input green-text" id="cd-sell"
-                                            oninput="formatCurrencyInput(this); calculateDetailsFinancials()">
-                                    </div>
-                                    <div class="fin-row">
-                                        <span class="fin-label">Despesas (R$)</span>
-                                        <span class="fin-val" id="cd-fin-expenses"
-                                            style="color:var(--red-alert);">-</span>
-                                    </div>
-                                    <div class="fin-row">
-                                        <span class="fin-label">Lucro Projetado</span>
-                                        <span class="fin-val" id="cd-profit">-</span>
-                                    </div>
-                                    <div class="fin-row">
-                                        <span class="fin-label">Margem Projetada</span>
-                                        <span class="fin-val" id="cd-margin">-</span>
-                                    </div>
+                <!-- ABA 1: FICHA & GALERIA -->
+                <div class="cd-tab-pane tab-geral active">
+                    <!-- Ficha Técnica (Esquerda) -->
+                    <div class="focar-specs-col">
+                        <div class="car-details-card table-card" style="margin-top: 0;">
+                            <h3 style="margin-bottom: 20px; font-size: 16px;">Car Specifications</h3>
+                            <div class="focar-form-grid">
+                                <div class="focar-form-group">
+                                    <label class="focar-label">Ano / Modelo <span class="req">*</span></label>
+                                    <input type="text" class="focar-input" id="cd-year" value="-" oninput="updateSummaryFields()">
                                 </div>
-                            </div>
-
-                            <!-- Card de Gastos -->
-                            <div class="car-details-card expenses-card"
-                                style="margin-top: 0; padding: 32px; display:flex; flex-direction:column;">
-                                <div
-                                    style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                                    <h3 style="font-size: 16px; margin: 0;"><i data-lucide="receipt"
-                                            style="width:16px;height:16px;vertical-align:middle;margin-right:6px;color:var(--red-alert);"></i>
-                                        Gastos / Despesas</h3>
-                                    <button class="btn btn-primary btn-sm" style="padding:4px 8px; font-size:12px;"
-                                        onclick="openAddDespesaModalFromCar()"><i data-lucide="plus"
-                                            style="width:14px;height:14px;"></i> Lançar</button>
+                                <div class="focar-form-group">
+                                    <label class="focar-label">Quilometragem <span class="req">*</span></label>
+                                    <input type="number" class="focar-input" id="cd-km" value="0" oninput="updateSummaryFields()">
                                 </div>
-                                <div id="cd-expenses-list" style="flex:1; overflow-y:auto; padding-right:4px;">
-                                    <!-- Preenchido dinamicamente -->
+                                <div class="focar-form-group">
+                                    <label class="focar-label">Cor</label>
+                                    <input type="text" class="focar-input" id="cd-color" value="-">
                                 </div>
-                                <div
-                                    style="border-top:1px solid rgba(255,255,255,0.05); padding-top:16px; margin-top:16px; display:flex; justify-content:space-between; align-items:center; font-weight:600; font-size:14px;">
-                                    <span style="color:var(--text-muted); font-size:13px;">Custo Total:</span>
-                                    <span id="cd-expenses-total" style="color:var(--red-alert); font-size:16px;">R$
-                                        0,00</span>
+                                <div class="focar-form-group">
+                                    <label class="focar-label">Placa</label>
+                                    <input type="text" class="focar-input" id="cd-plate" style="text-transform:uppercase;" value="-">
+                                </div>
+                                <div class="focar-form-group">
+                                    <label class="focar-label">Chassi</label>
+                                    <input type="text" class="focar-input" id="cd-chassis" style="text-transform:uppercase;" value="-">
+                                </div>
+                                <div class="focar-form-group">
+                                    <label class="focar-label">Renavam</label>
+                                    <input type="text" class="focar-input" id="cd-renavam" value="-">
+                                </div>
+                                <div class="focar-form-group">
+                                    <label class="focar-label">Documento</label>
+                                    <select class="focar-input" id="cd-document">
+                                        <option value="sim">Sim</option>
+                                        <option value="nao">Não</option>
+                                        <option value="pendente">Pendente</option>
+                                    </select>
+                                </div>
+                                <div class="focar-form-group">
+                                    <label class="focar-label">Status</label>
+                                    <select class="focar-input" id="cd-status-select" onchange="updateDetailsStatusBadge()">
+                                        <option value="disponivel">Disponível</option>
+                                        <option value="preparacao">Em Preparação</option>
+                                        <option value="reservado">Reservado</option>
+                                        <option value="vendido">Vendidos</option>
+                                    </select>
+                                </div>
+                                <div class="focar-form-group full-width">
+                                    <label class="focar-label">Description (Anotações)</label>
+                                    <textarea id="cd-notes" class="focar-input" placeholder="Enter a description..." style="min-height: 100px; resize: vertical; padding: 12px; font-family: inherit; font-size: 13px;"></textarea>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Direita: Financeiro e Estoque -->
-                    <div class="car-details-right-col">
-                        <!-- Overview (Movido) -->
-                        <div class="car-details-card overview-card">
-                            <h3 style="margin-bottom: 20px; font-size: 16px;">Overview <span
-                                    style="font-size:12px; font-weight:normal; color:var(--text-muted); margin-left:8px;">(Ficha
-                                    Técnica)</span></h3>
-                            <div class="car-overview-grid" style="grid-template-columns: 1fr 1fr; gap: 16px;">
-                                <div class="car-overview-col">
-                                    <div class="car-info-item"><span class="car-info-label">Ano / Modelo</span><input
-                                            type="text" class="inline-edit-input" id="cd-year" value="-"
-                                            oninput="updateSummaryFields()"></div>
-                                    <div class="car-info-item"><span class="car-info-label">Cor</span><input type="text"
-                                            class="inline-edit-input" id="cd-color" value="-"></div>
-                                    <div class="car-info-item"><span class="car-info-label">Placa</span><input
-                                            type="text" class="inline-edit-input" id="cd-plate"
-                                            style="text-transform:uppercase;" value="-"></div>
-                                    <div class="car-info-item"><span class="car-info-label">Quilometragem</span><input
-                                            type="number" class="inline-edit-input" id="cd-km" value="0"
-                                            oninput="updateSummaryFields()"></div>
-                                    <div class="car-info-item"><span class="car-info-label">Chassi</span><input
-                                            type="text" class="inline-edit-input" id="cd-chassis"
-                                            style="text-transform:uppercase;" value="-"></div>
+                    <!-- Galeria (Direita) -->
+                    <div class="focar-gallery-col">
+                        <div class="focar-gallery-card">
+                            <h3 style="font-size: 16px; margin-bottom: 4px;">Car Images</h3>
+                            <div class="focar-main-img-wrap">
+                                <img src="" alt="Imagem do Carro" id="cd-main-img" onerror="this.style.display='none'; document.getElementById('cd-no-img').style.display='flex'">
+                                <div id="cd-no-img" style="display: flex; flex-direction: column; align-items: center; color: var(--text-muted);">
+                                    <i data-lucide="image-off" style="width: 32px; height: 32px; margin-bottom: 8px;"></i>
+                                    <span>Sem imagens</span>
                                 </div>
-                                <div class="car-overview-col">
-                                    <div class="car-info-item"><span class="car-info-label">Renavam</span><input
-                                            type="text" class="inline-edit-input" id="cd-renavam" value="-"></div>
-                                    <div class="car-info-item"><span class="car-info-label">Documento</span>
-                                        <select class="inline-edit-input" id="cd-document">
-                                            <option value="sim">Sim</option>
-                                            <option value="nao">Não</option>
-                                            <option value="pendente">Pendente</option>
-                                        </select>
-                                    </div>
-                                    <div class="car-info-item"><span class="car-info-label">Status</span>
-                                        <select class="inline-edit-input" id="cd-status-select"
-                                            onchange="updateDetailsStatusBadge()">
-                                            <option value="disponivel">Disponível</option>
-                                            <option value="preparacao">Em Preparação</option>
-                                            <option value="reservado">Reservado</option>
-                                            <option value="vendido">Vendido</option>
-                                        </select>
-                                    </div>
-                                    <div class="car-info-item"><span class="car-info-label">Tipo de Venda</span>
-                                        <select class="inline-edit-input" id="cd-type" onchange="updateSummaryFields()">
-                                            <option value="convencional">Convencional</option>
-                                            <option value="repasse">Repasse</option>
-                                        </select>
-                                    </div>
-                                    <div class="car-info-item"><span class="car-info-label">Fipe</span>
-                                        <div style="display:flex; gap: 4px; align-items:center;">
-                                            <input type="text" class="inline-edit-input" id="cd-fipe-code"
-                                                placeholder="Cód" style="width: 70px; font-size:12px; padding:4px;"
-                                                onblur="quickFipeSearch()" title="Código Fipe">
-                                            <input type="text" class="inline-edit-input" id="cd-fipe-price"
-                                                placeholder="R$ 0,00" style="width: 90px; font-size:12px; padding:4px;"
-                                                title="Valor Fipe">
-                                            <button class="btn btn-secondary" style="padding:4px; height:auto;"
-                                                onclick="openFipeSearchModal()" title="Buscar na Tabela Fipe"><i
-                                                    data-lucide="search" style="width:14px;height:14px;"></i></button>
-                                        </div>
-                                    </div>
+                            </div>
+                            <div class="focar-thumbs-grid" id="cd-thumbs">
+                                <!-- Thumbs preenchidos via JS -->
+                            </div>
+                            <label for="cd-photo-input" class="focar-add-more">
+                                <i data-lucide="plus-circle" style="width: 20px; height: 20px;"></i>
+                                <span>Add More</span>
+                            </label>
+                            <input type="file" id="cd-photo-input" accept="image/*" multiple style="display:none;" onchange="previewDetailsPhotos(this)">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ABA 2: FINANCEIRO -->
+                <div class="cd-tab-pane tab-fin">
+                    <!-- Esquerda Financeiro -->
+                    <div class="focar-specs-col">
+                        <div class="car-details-card table-card" style="margin-top: 0; padding: 32px; display: flex; flex-direction: column;">
+                            <h3 style="margin-bottom: 20px; font-size: 16px;">Financeiro e Margem</h3>
+                            <div class="fin-table" style="flex:1;">
+                                <div class="fin-row">
+                                    <span class="fin-label">Preço de Custo (R$)</span>
+                                    <input type="text" class="inline-edit-input fin-input dimmed" id="cd-buy" oninput="formatCurrencyInput(this); calculateDetailsFinancials()">
+                                </div>
+                                <div class="fin-row highlight-row">
+                                    <span class="fin-label">Preço de Venda (R$)</span>
+                                    <input type="text" class="inline-edit-input fin-input green-text" id="cd-sell" oninput="formatCurrencyInput(this); calculateDetailsFinancials()">
+                                </div>
+                                <div class="fin-row">
+                                    <span class="fin-label">Despesas (R$)</span>
+                                    <span class="fin-val" id="cd-fin-expenses" style="color:var(--red-alert);">-</span>
+                                </div>
+                                <div class="fin-row">
+                                    <span class="fin-label">Lucro Projetado</span>
+                                    <span class="fin-val" id="cd-profit">-</span>
+                                </div>
+                                <div class="fin-row">
+                                    <span class="fin-label">Margem Projetada</span>
+                                    <span class="fin-val" id="cd-margin">-</span>
                                 </div>
                             </div>
                         </div>
 
                         <div class="car-details-card table-card" style="margin-top: 24px;">
-                            <h3 style="margin-bottom: 16px; font-size: 16px;"><i data-lucide="file-edit" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;color:var(--text-muted);"></i>Anotações / Comentários</h3>
-                            <textarea id="cd-notes" class="inline-edit-input" placeholder="Adicione observações sobre o veículo, estado de conservação, pendências..." style="width: 100%; min-height: 100px; padding: 12px; resize: vertical; border-radius: 8px; background: rgba(255,255,255,0.02); color: var(--text-color); font-family: inherit; font-size: 13px; line-height: 1.5;"></textarea>
-                        </div>
-
-                        <div class="car-details-card table-card" style="margin-top: 24px;">
-                            <h3 style="margin-bottom: 20px; font-size: 16px;">Logística e Estoque</h3>
+                            <h3 style="margin-bottom: 20px; font-size: 16px;">Tabela Fipe & Logística</h3>
                             <div class="fin-table">
                                 <div class="fin-row">
+                                    <span class="fin-label">Tipo de Venda</span>
+                                    <select class="inline-edit-input fin-input" id="cd-type" onchange="updateSummaryFields()">
+                                        <option value="convencional">Convencional</option>
+                                        <option value="repasse">Repasse</option>
+                                    </select>
+                                </div>
+                                <div class="fin-row">
+                                    <span class="fin-label">Fipe (Cód / Valor)</span>
+                                    <div style="display:flex; gap: 4px; align-items:center;">
+                                        <input type="text" class="inline-edit-input" id="cd-fipe-code" placeholder="Cód" style="width: 70px; font-size:12px; padding:4px;" onblur="quickFipeSearch()">
+                                        <input type="text" class="inline-edit-input" id="cd-fipe-price" placeholder="R$ 0,00" style="width: 90px; font-size:12px; padding:4px;">
+                                        <button class="btn btn-secondary" style="padding:4px; height:auto;" onclick="openFipeSearchModal()"><i data-lucide="search" style="width:14px;height:14px;"></i></button>
+                                    </div>
+                                </div>
+                                <div class="fin-row">
                                     <span class="fin-label">Data de Compra</span>
-                                    <input type="date" class="inline-edit-input fin-input" id="cd-purchase-date"
-                                        onchange="calculateDetailsFinancials()">
+                                    <input type="date" class="inline-edit-input fin-input" id="cd-purchase-date" onchange="calculateDetailsFinancials()">
                                 </div>
                                 <div class="fin-row">
                                     <span class="fin-label">Dias em Estoque</span>
@@ -635,63 +586,43 @@
                                 </div>
                             </div>
                         </div>
-
-                        <div class="car-details-card table-card" id="cd-documents-card"
-                            style="margin-top: 24px;">
-                            <div
-                                style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                                <h3 style="font-size: 16px; margin: 0;"><i data-lucide="paperclip"
-                                        style="width:16px;height:16px;vertical-align:middle;margin-right:6px;color:var(--accent-primary);"></i>
-                                    Documentos do Veículo</h3>
-                                <label for="cd-doc-file-input" class="btn btn-primary btn-sm"
-                                    style="padding:4px 8px; font-size:12px; cursor:pointer;"><i data-lucide="upload"
-                                        style="width:14px;height:14px;"></i> Anexar</label>
-                                <input type="file" id="cd-doc-file-input" accept=".pdf,.jpg,.jpeg,image/jpeg,application/pdf"
-                                    style="display:none;" multiple onchange="handleDocFileSelected(this)">
+                    </div>
+                    
+                    <!-- Direita Despesas -->
+                    <div class="focar-gallery-col">
+                        <div class="car-details-card expenses-card" style="margin-top: 0; padding: 32px; display:flex; flex-direction:column; height: 100%;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                                <h3 style="font-size: 16px; margin: 0;"><i data-lucide="receipt" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;color:var(--red-alert);"></i> Gastos / Despesas</h3>
+                                <button class="btn btn-primary btn-sm" style="padding:4px 8px; font-size:12px;" onclick="openAddDespesaModalFromCar()"><i data-lucide="plus" style="width:14px;height:14px;"></i> Lançar</button>
                             </div>
-                            <!-- Formulário de descrição (aparece após selecionar arquivo) -->
-                            <div id="cd-doc-upload-form" style="display:none; margin-bottom:16px; padding:12px; background:rgba(255,255,255,0.03); border-radius:8px; border:1px dashed rgba(255,255,255,0.1);">
-                                <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-                                    <i data-lucide="file-text" style="width:16px;height:16px;color:var(--accent-primary);"></i>
-                                    <span id="cd-doc-file-name" style="font-size:13px; color:var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
-                                </div>
-                                <input type="text" class="inline-edit-input" id="cd-doc-description"
-                                    placeholder="Descrição (ex: CRLV 2026, Laudo Cautelar...)"
-                                    style="width:100%; margin-bottom:10px; font-size:13px; padding:8px;">
-                                <div style="display:flex; gap:8px; justify-content:flex-end;">
-                                    <button class="btn btn-secondary" style="padding:6px 12px; font-size:12px;"
-                                        onclick="cancelDocUpload()">Cancelar</button>
-                                    <button class="btn btn-success" style="padding:6px 12px; font-size:12px;"
-                                        onclick="confirmDocUpload()"><i data-lucide="upload-cloud"
-                                            style="width:14px;height:14px;margin-right:4px;"></i>Enviar</button>
-                                </div>
-                            </div>
-                            <div id="cd-documents-list" style="max-height:240px; overflow-y:auto; padding-right:4px;">
+                            <div id="cd-expenses-list" style="flex:1; overflow-y:auto; padding-right:4px; min-height: 200px;">
                                 <!-- Preenchido dinamicamente -->
                             </div>
+                            <div style="border-top:1px solid rgba(255,255,255,0.05); padding-top:16px; margin-top:16px; display:flex; justify-content:space-between; align-items:center; font-weight:600; font-size:14px;">
+                                <span style="color:var(--text-muted); font-size:13px;">Custo Total:</span>
+                                <span id="cd-expenses-total" style="color:var(--red-alert); font-size:16px;">R$ 0,00</span>
+                            </div>
                         </div>
+                    </div>
+                </div>
 
-                        <div class="car-details-card table-card" id="cd-sale-card"
-                            style="margin-top: 24px; border: 1px solid var(--green-profit); flex: 1; display: flex; flex-direction: column;">
-                            <h3 style="margin-bottom: 20px; font-size: 16px; color: var(--green-profit);"><i
-                                    data-lucide="badge-dollar-sign"
-                                    style="width:18px;height:18px;vertical-align:bottom;margin-right:4px;"></i>
-                                Movimentação e Venda</h3>
+                <!-- ABA 3: DOCS E VENDA -->
+                <div class="cd-tab-pane tab-docs">
+                    <!-- Esquerda Venda -->
+                    <div class="focar-specs-col">
+                        <div class="car-details-card table-card" id="cd-sale-card" style="margin-top: 0; border: 1px solid var(--green-profit); flex: 1; display: flex; flex-direction: column;">
+                            <h3 style="margin-bottom: 20px; font-size: 16px; color: var(--green-profit);"><i data-lucide="badge-dollar-sign" style="width:18px;height:18px;vertical-align:bottom;margin-right:4px;"></i> Movimentação e Venda</h3>
                             <div class="fin-table" id="cd-sale-form">
                                 <div class="fin-row" style="position: relative; overflow: visible;">
                                     <span class="fin-label">Comprador / Cliente</span>
                                     <div style="position: relative;">
-                                        <input type="text" class="inline-edit-input fin-input" id="cd-sell-client"
-                                            placeholder="Buscar ou novo nome" style="width: 200px;" autocomplete="off"
-                                            oninput="handleClientSearch()" onfocus="handleClientSearch()">
-                                        <div id="cd-client-dropdown" class="custom-dropdown" style="display: none;">
-                                        </div>
+                                        <input type="text" class="inline-edit-input fin-input" id="cd-sell-client" placeholder="Buscar ou novo nome" style="width: 200px;" autocomplete="off" oninput="handleClientSearch()" onfocus="handleClientSearch()">
+                                        <div id="cd-client-dropdown" class="custom-dropdown" style="display: none;"></div>
                                     </div>
                                 </div>
                                 <div class="fin-row">
                                     <span class="fin-label">CPF / CNPJ</span>
-                                    <input type="text" class="inline-edit-input fin-input" id="cd-sell-doc"
-                                        placeholder="000.000.000-00" style="width: 150px;">
+                                    <input type="text" class="inline-edit-input fin-input" id="cd-sell-doc" placeholder="000.000.000-00" style="width: 150px;">
                                 </div>
                                 <div class="fin-row">
                                     <span class="fin-label">Data da Venda</span>
@@ -704,13 +635,9 @@
                                         <option value="repasse">Repasse</option>
                                     </select>
                                 </div>
-                                <div class="fin-row" style="justify-content: center; padding-top: 24px;"
-                                    id="cd-sale-action-row">
-                                    <button class="btn btn-success"
-                                        style="width: 100%; justify-content: center; padding: 12px; font-size: 15px; font-weight: 600;"
-                                        onclick="confirmCarSale(event)">
-                                        <i data-lucide="check-circle"
-                                            style="width:18px;height:18px;margin-right:8px;"></i> Confirmar Venda
+                                <div class="fin-row" style="justify-content: center; padding-top: 24px;" id="cd-sale-action-row">
+                                    <button class="btn btn-success" style="width: 100%; justify-content: center; padding: 12px; font-size: 15px; font-weight: 600;" onclick="confirmCarSale(event)">
+                                        <i data-lucide="check-circle" style="width:18px;height:18px;margin-right:8px;"></i> Confirmar Venda
                                     </button>
                                 </div>
                             </div>

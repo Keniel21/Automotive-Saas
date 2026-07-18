@@ -306,6 +306,8 @@ async function handleLogout() {
 
 async function fetchCloudData() {
     if (!isCloudActive) return;
+    const mainContent = document.querySelector('.main-content');
+    if (mainContent) mainContent.classList.add('skeleton-loading');
     try {
         const { data: est, error: errEst } = await supabaseClient.from('estoque').select('*').order('id', { ascending: false });
         if (!errEst) estoque = est.map(c => ({
@@ -354,6 +356,9 @@ async function fetchCloudData() {
         if (docs) documentosVeiculo = docs.map(d => ({ id: d.id, carId: d.car_id, fileName: d.file_name, fileUrl: d.file_url, fileType: d.file_type, description: d.description, createdAt: d.created_at }));
     } catch (e) {
         console.error("Falha ao sincronizar dados da nuvem: ", e);
+    } finally {
+        const mainContent = document.querySelector('.main-content');
+        if (mainContent) mainContent.classList.remove('skeleton-loading');
     }
 }
 
@@ -796,6 +801,26 @@ function renderEstoqueTable(filterStatus = 'todos', searchQuery = '') {
         if (valA > valB) return estoqueSortDirection === 'asc' ? 1 : -1;
         return 0;
     });
+
+    if (filteredCars.length === 0) {
+        const emptyState = document.createElement("tr");
+        emptyState.innerHTML = `<td colspan="11">
+            <div class="empty-state-container">
+                <i data-lucide="package-search"></i>
+                <h4>Nenhum veículo encontrado</h4>
+                <p>Tente ajustar os filtros ou cadastre um novo carro no estoque.</p>
+            </div>
+        </td>`;
+        tableBody.appendChild(emptyState);
+        gridView.innerHTML = `<div class="empty-state-container" style="grid-column: 1 / -1;">
+            <i data-lucide="package-search"></i>
+            <h4>Nenhum veículo encontrado</h4>
+            <p>Tente ajustar os filtros ou cadastre um novo carro no estoque.</p>
+        </div>`;
+        lucide.createIcons();
+        return;
+    }
+
     filteredCars.forEach(car => {
         const lucroEst = car.sellPrice - car.buyPrice;
         const margemEst = car.sellPrice > 0 ? (lucroEst / car.sellPrice) * 100 : 0;
@@ -1148,6 +1173,7 @@ function openCarDetails(carId) {
     document.getElementById("current-tab-title").innerText = "Detalhes do Veículo";
     document.getElementById("current-tab-subtitle").innerText = "Ficha técnica, financeiro e imagens";
 
+    switchCarDetailsTab('geral');
     updateSummaryFields();
     lucide.createIcons();
 
@@ -1498,6 +1524,13 @@ function renderKanban(searchQuery = '') {
     });
     columns.forEach(col => {
         const idSuffix = statusToIdMap[col] || col;
+        const container = document.getElementById(`cards-${idSuffix}`);
+        if (container && container.children.length === 0) {
+            container.innerHTML = `<div class="empty-state-container" style="padding: 20px 10px;">
+                <i data-lucide="inbox" style="width:24px;height:24px;"></i>
+                <p style="font-size:11px; margin-top:8px;">Vazio</p>
+            </div>`;
+        }
         const label = document.getElementById(`count-${idSuffix}`);
         if (label) label.innerText = colCounts[col];
     });
@@ -3429,3 +3462,29 @@ async function deleteCarDocument(docId, storagePath) {
         console.error("Erro ao excluir documento:", e);
     }
 }
+
+// Função para alternar abas dentro da Ficha do Veículo
+function switchCarDetailsTab(tabId) {
+    // Esconde todos os painéis
+    document.querySelectorAll('.cd-tab-pane').forEach(pane => {
+        pane.classList.remove('active');
+    });
+    // Remove classe active dos botões
+    document.querySelectorAll('.cd-mobile-tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+
+    // Mostra o painel correto
+    const targetPane = document.querySelector(`.cd-tab-pane.tab-${tabId}`);
+    if (targetPane) {
+        targetPane.classList.add('active');
+    }
+
+    // Ativa o botão correto
+    document.querySelectorAll(`.cd-mobile-tab-btn`).forEach(btn => {
+        if (btn.getAttribute('onclick').includes(tabId)) {
+            btn.classList.add('active');
+        }
+    });
+}
+

@@ -3094,3 +3094,290 @@ select.inline-edit-input option {
     font-size: 11px;
     color: var(--text-muted);
 }
+/* ==========================================
+   UX/UI IMPROVEMENTS (MOBILE TABS, SKELETON, EMPTY STATES)
+   ========================================== */
+
+/* Skeleton Loading Animation */
+@keyframes shimmer {
+    0% { background-position: -1000px 0; }
+    100% { background-position: 1000px 0; }
+}
+.skeleton-loading {
+    animation: shimmer 2s infinite linear;
+    background: linear-gradient(to right, var(--card-bg) 4%, rgba(255,255,255,0.05) 25%, var(--card-bg) 36%);
+    background-size: 1000px 100%;
+    color: transparent !important;
+    border-color: transparent !important;
+    pointer-events: none;
+}
+.skeleton-loading * {
+    visibility: hidden;
+}
+
+/* Empty States */
+.empty-state-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--text-muted);
+}
+.empty-state-container svg {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 16px;
+    color: rgba(255, 255, 255, 0.2);
+}
+.empty-state-container h4 {
+    font-size: 16px;
+    color: var(--text-light);
+    margin-bottom: 8px;
+}
+.empty-state-container p {
+    font-size: 13px;
+    max-width: 300px;
+}
+
+/* Mobile Tabs for Car Details Modal */
+.cd-mobile-tabs {
+    display: none;
+    flex-direction: row;
+    background: var(--bg-primary);
+    border-bottom: 1px solid var(--border-subtle);
+    overflow-x: auto;
+    padding: 0 16px;
+    gap: 16px;
+}
+.cd-mobile-tab-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    padding: 16px 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: var(--transition-fast);
+}
+.cd-mobile-tab-btn.active {
+    color: var(--blue-primary);
+    border-bottom-color: var(--blue-primary);
+}
+
+@media (max-width: 768px) {
+    .cd-mobile-tabs {
+        display: flex;
+    }
+    
+    /* Ensure action buttons are symmetric */
+    .car-details-actions {
+        display: flex;
+        width: 100%;
+        gap: 8px;
+    }
+    .car-details-actions .btn {
+        flex: 1;
+        justify-content: center;
+    }
+}
+
+
+/* ==========================================
+   FOCAR REDESIGN (CAR DETAILS TABS & INPUTS)
+   ========================================== */
+.cd-tabs-nav {
+    display: flex;
+    flex-direction: row;
+    background: transparent;
+    border-bottom: 1px solid var(--border-subtle);
+    overflow-x: auto;
+    padding: 0;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+.cd-tabs-nav .cd-mobile-tab-btn {
+    padding: 12px 0;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: var(--transition-fast);
+}
+.cd-tabs-nav .cd-mobile-tab-btn.active {
+    color: var(--blue-primary);
+    border-bottom-color: var(--blue-primary);
+}
+
+/* FoCar Input Form Group */
+.focar-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.focar-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.focar-form-group.full-width {
+    grid-column: 1 / -1;
+}
+.focar-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+.focar-label span.req {
+    color: var(--red-alert);
+}
+.focar-input {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    padding: 12px 14px;
+    color: var(--text-light);
+    font-size: 14px;
+    outline: none;
+    transition: var(--transition-fast);
+    width: 100%;
+}
+.focar-input:focus {
+    border-color: var(--border-subtle);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Redesigned Tab Content Area */
+.cd-tab-pane {
+    display: none;
+    gap: 24px;
+    align-items: start;
+}
+.cd-tab-pane.active {
+    display: grid;
+    grid-template-columns: 1fr 340px; /* Asymmetric layout */
+}
+@media (max-width: 900px) {
+    .cd-tab-pane.active {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Redesigned Gallery (Right Column) */
+.focar-gallery-card {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.focar-main-img-wrap {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+.focar-main-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.focar-thumbs-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+.focar-thumb {
+    aspect-ratio: 1;
+    border-radius: 6px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid transparent;
+}
+.focar-thumb.active {
+    border-color: var(--blue-primary);
+}
+.focar-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.focar-add-more {
+    aspect-ratio: 1;
+    border-radius: 6px;
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 11px;
+    cursor: pointer;
+    background: transparent;
+    gap: 4px;
+}
+.focar-add-more:hover {
+    background: rgba(255, 255, 255, 0.02);
+    color: var(--text-light);
+}
+
+/* Tabs Redesign */
+.cd-tabs-nav {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    padding-bottom: 8px;
+}
+.cd-tabs-nav button {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 8px 16px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+.cd-tabs-nav button:hover {
+    color: var(--text-light);
+    background: rgba(255,255,255,0.02);
+}
+.cd-tabs-nav button.active {
+    color: var(--text-light);
+    background: rgba(255,255,255,0.05);
+}
+
+.cd-tab-pane {
+    display: none;
+    gap: 24px;
+    align-items: flex-start;
+}
+.cd-tab-pane.active {
+    display: flex;
+}
+
+@media (max-width: 900px) {
+    .cd-tab-pane {
+        flex-direction: column;
+    }
+    .focar-specs-col, .focar-gallery-col {
+        width: 100%;
+        flex: none;
+    }
+}
