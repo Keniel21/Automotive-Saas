@@ -1039,128 +1039,139 @@ let currentCdImages = "";
 
 // VisualizaÃƒÂ§ÃƒÂ£o de Detalhes do VeÃƒÂ­culo (EdiÃƒÂ§ÃƒÂ£o Inline)
 function openCarDetails(carId) {
-    try {
-        const car = estoque.find(c => c.id === carId);
-        if (!car) return;
+    const car = estoque.find(c => c.id === carId);
+    if (!car) return;
 
-        currentCdCarId = car.id;
-        currentCdImages = car.image_url || "";
+    currentCdCarId = car.id;
+    currentCdImages = car.image_url || "";
 
-        // Popula cabeÃƒÂ§alho
-        document.getElementById('cd-title').innerText = car.model;
-        const statusEl = document.getElementById('cd-status');
-        statusEl.innerText = car.status;
-        statusEl.className = `badge ${car.status}`;
+    // Popula cabeÃƒÂ§alho
+    document.getElementById('cd-title').innerText = car.model;
+    const statusEl = document.getElementById('cd-status');
+    statusEl.innerText = car.status;
+    statusEl.className = `badge ${car.status}`;
 
-        // Popula Ficha TÃƒÂ©cnica (Inputs)
-        document.getElementById('cd-year').value = car.year;
-        document.getElementById('cd-km').value = car.km;
-        document.getElementById('cd-color').value = car.color || '';
-        document.getElementById('cd-plate').value = car.plate || '';
-        document.getElementById('cd-chassis').value = car.chassis || '';
-        document.getElementById('cd-renavam').value = car.renavam || '';
-        document.getElementById('cd-document').value = car.documentStatus || 'pendente';
-        document.getElementById('cd-type').value = car.type || 'convencional';
-        document.getElementById('cd-status-select').value = car.status;
-        document.getElementById('cd-fipe-code').value = car.fipeCode || '';
+    // Popula Ficha TÃƒÂ©cnica (Inputs)
+    document.getElementById('cd-year').value = car.year;
+    document.getElementById('cd-km').value = car.km;
+    document.getElementById('cd-color').value = car.color || '';
+    document.getElementById('cd-plate').value = car.plate || '';
+    document.getElementById('cd-chassis').value = car.chassis || '';
+    document.getElementById('cd-renavam').value = car.renavam || '';
+    document.getElementById('cd-document').value = car.documentStatus || 'pendente';
+    document.getElementById('cd-type').value = car.type || 'convencional';
+    document.getElementById('cd-status-select').value = car.status;
+    document.getElementById('cd-fipe-code').value = car.fipeCode || '';
 
-        // Format fipePrice if it exists
-        if (car.fipePrice) {
-            document.getElementById('cd-fipe-price').value = 'R$ ' + parseFloat(car.fipePrice).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-        } else {
-            document.getElementById('cd-fipe-price').value = '';
+    // Format fipePrice if it exists
+    if (car.fipePrice) {
+        document.getElementById('cd-fipe-price').value = 'R$ ' + parseFloat(car.fipePrice).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+    } else {
+        document.getElementById('cd-fipe-price').value = '';
+    }
+
+    // Popula Anotações / Comentários
+    document.getElementById('cd-notes').value = car.notes || '';
+
+    // Popula Financeiro (Inputs) com formatação R$
+    document.getElementById('cd-buy').value = car.buyPrice ? formatNumberBR(car.buyPrice) : '';
+    document.getElementById('cd-sell').value = car.sellPrice ? formatNumberBR(car.sellPrice) : '';
+
+    // LogÃƒÂ­stica (Inputs)
+    if (car.purchaseDate) {
+        document.getElementById('cd-purchase-date').value = car.purchaseDate;
+    } else {
+        document.getElementById('cd-purchase-date').value = '';
+    }
+
+    // Recalcula cÃƒÂ¡lculos read-only (Lucro, Margem, Dias)
+    calculateDetailsFinancials();
+
+    // Renderiza gastos do veículo
+    renderCarExpenses(carId);
+
+    // Renderiza documentos do veículo
+    renderCarDocuments(carId);
+
+    // Movimentação e Venda Card
+    const saleCard = document.getElementById('cd-sale-card');
+    const sellBtnHeader = document.getElementById('cd-btn-sell');
+    if (car.status === 'vendido') {
+        sellBtnHeader.style.display = 'none';
+        saleCard.style.display = 'block';
+        document.getElementById('cd-sale-action-row').style.display = 'none';
+
+        const sale = vendas.find(v => v.carId === carId);
+        if (sale) {
+            document.getElementById('cd-sell-client').value = sale.client || '';
+            document.getElementById('cd-sell-doc').value = sale.clientDocument || '';
+            document.getElementById('cd-sell-date').value = sale.date || '';
+            document.getElementById('cd-sell-type').value = sale.type || 'convencional';
         }
+        document.getElementById('cd-sell-client').disabled = true;
+        document.getElementById('cd-sell-doc').disabled = true;
+        document.getElementById('cd-sell-date').disabled = true;
+        document.getElementById('cd-sell-type').disabled = true;
+    } else {
+        sellBtnHeader.style.display = 'flex';
+        saleCard.style.display = 'block';
+        document.getElementById('cd-sale-action-row').style.display = 'flex';
 
-        // Popula Anotações / Comentários
-        document.getElementById('cd-notes').value = car.notes || '';
+        document.getElementById('cd-sell-client').value = '';
+        document.getElementById('cd-sell-doc').value = '';
+        document.getElementById('cd-sell-date').value = new Date().toISOString().split('T')[0];
+        document.getElementById('cd-sell-type').value = 'convencional';
 
-        // Popula Financeiro (Inputs) com formatação R$
-        document.getElementById('cd-buy').value = car.buyPrice ? formatNumberBR(car.buyPrice) : '';
-        document.getElementById('cd-sell').value = car.sellPrice ? formatNumberBR(car.sellPrice) : '';
+        document.getElementById('cd-sell-client').disabled = false;
+        document.getElementById('cd-sell-doc').disabled = false;
+        document.getElementById('cd-sell-date').disabled = false;
+        document.getElementById('cd-sell-type').disabled = false;
+    }
 
-        // LogÃƒÂ­stica (Inputs)
-        if (car.purchaseDate) {
-            document.getElementById('cd-purchase-date').value = car.purchaseDate;
-        } else {
-            document.getElementById('cd-purchase-date').value = '';
-        }
+    // Galeria
+    const mainImg = document.getElementById('cd-main-img');
+    const noImg = document.getElementById('cd-no-img');
+    const thumbsContainer = document.getElementById('cd-thumbs');
+    thumbsContainer.innerHTML = '';
 
-        // Recalcula cÃƒÂ¡lculos read-only (Lucro, Margem, Dias)
-        calculateDetailsFinancials();
+    if (car.image_url && car.image_url.trim() !== '') {
+        const urls = car.image_url.split(',').filter(u => u.trim() !== '');
+        if (urls.length > 0) {
+            mainImg.src = urls[0].trim();
+            mainImg.style.display = 'block';
+            noImg.style.display = 'none';
 
-        // Renderiza gastos do veículo
-        renderCarExpenses(carId);
-
-        // Renderiza documentos do veículo
-        renderCarDocuments(carId);
-
-        // Movimentação e Venda Card
-        const saleCard = document.getElementById('cd-sale-card');
-        const sellBtnHeader = document.getElementById('cd-btn-sell');
-        if (car.status === 'vendido') {
-            sellBtnHeader.style.display = 'none';
-            saleCard.style.display = 'block';
-            document.getElementById('cd-sale-action-row').style.display = 'none';
-
-            const sale = vendas.find(v => v.carId === carId);
-            if (sale) {
-                document.getElementById('cd-sell-client').value = sale.client || '';
-                document.getElementById('cd-sell-doc').value = sale.clientDocument || '';
-                document.getElementById('cd-sell-date').value = sale.date || '';
-                document.getElementById('cd-sell-type').value = sale.type || 'convencional';
-            }
-            document.getElementById('cd-sell-client').disabled = true;
-            document.getElementById('cd-sell-doc').disabled = true;
-            document.getElementById('cd-sell-date').disabled = true;
-            document.getElementById('cd-sell-type').disabled = true;
-        } else {
-            sellBtnHeader.style.display = 'flex';
-            saleCard.style.display = 'block';
-            document.getElementById('cd-sale-action-row').style.display = 'flex';
-
-            document.getElementById('cd-sell-client').value = '';
-            document.getElementById('cd-sell-doc').value = '';
-            document.getElementById('cd-sell-date').value = new Date().toISOString().split('T')[0];
-            document.getElementById('cd-sell-type').value = 'convencional';
-
-            document.getElementById('cd-sell-client').disabled = false;
-            document.getElementById('cd-sell-doc').disabled = false;
-            document.getElementById('cd-sell-date').disabled = false;
-            document.getElementById('cd-sell-type').disabled = false;
-        }
-
-        // Galeria
-        const mainImg = document.getElementById('cd-main-img');
-        const noImg = document.getElementById('cd-no-img');
-        const thumbsContainer = document.getElementById('cd-thumbs');
-        thumbsContainer.innerHTML = '';
-
-        if (car.image_url && car.image_url.trim() !== '') {
-            const urls = car.image_url.split(',').filter(u => u.trim() !== '');
-            if (urls.length > 0) {
-                mainImg.src = urls[0].trim();
-                mainImg.style.display = 'block';
-                noImg.style.display = 'none';
-
-                urls.forEach((url, idx) => {
-                    const thumb = document.createElement('img');
-                    thumb.src = url.trim();
-                    thumb.className = idx === 0 ? 'car-details-thumb active' : 'car-details-thumb';
-                    thumb.onclick = () => {
-                        mainImg.src = url.trim();
-                        document.querySelectorAll('.car-details-thumb').forEach(t => t.classList.remove('active'));
-                        thumb.classList.add('active');
-                    };
-                    thumbsContainer.appendChild(thumb);
-                });
-            } else {
-                mainImg.style.display = 'none';
-                noImg.style.display = 'flex';
-            }
+            urls.forEach((url, idx) => {
+                const thumb = document.createElement('img');
+                thumb.src = url.trim();
+                thumb.className = idx === 0 ? 'car-details-thumb active' : 'car-details-thumb';
+                thumb.onclick = () => {
+                    mainImg.src = url.trim();
+                    document.querySelectorAll('.car-details-thumb').forEach(t => t.classList.remove('active'));
+                    thumb.classList.add('active');
+                };
+                thumbsContainer.appendChild(thumb);
+            });
         } else {
             mainImg.style.display = 'none';
             noImg.style.display = 'flex';
         }
+    } else {
+        mainImg.style.display = 'none';
+        noImg.style.display = 'flex';
+    }
+
+    // Limpa o input de foto
+    document.getElementById('cd-photo-input').value = "";
+
+    // Troca de Aba simulada
+    document.querySelectorAll(".tab-pane").forEach(pane => pane.classList.remove("active"));
+    document.querySelectorAll(".sidebar-menu .menu-item").forEach(item => item.classList.remove("active"));
+
+    document.getElementById('car-details-tab').classList.add("active");
+
+    document.getElementById("current-tab-title").innerText = "Detalhes do Veículo";
+    document.getElementById("current-tab-subtitle").innerText = "Ficha técnica, financeiro e imagens";
 
     switchCarDetailsTab('geral');
     updateSummaryFields();
