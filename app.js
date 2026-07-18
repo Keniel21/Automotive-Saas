@@ -880,7 +880,7 @@ function renderEstoqueTable(filterStatus = 'todos', searchQuery = '') {
             <td><span class="badge ${car.status}">${car.status}</span></td>
             <td style="text-align: center;">
                 <div style="display:flex; gap:6px; justify-content:center; align-items:center;">
-                    <button class="btn btn-secondary" style="padding:4px 8px; font-size:11px" onclick="openEditCarModal(${car.id})" title="Editar"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button>
+                    <button class="btn btn-secondary" style="padding:4px 8px; font-size:11px" onclick="openCarDetails(${car.id})" title="Editar"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button>
                     ${car.status !== 'vendido' ? `<button class="btn btn-success" style="padding:4px 8px; font-size:11px" onclick="openCarDetailsForSale(${car.id})" title="Vender"><i data-lucide="badge-dollar-sign" style="width:12px;height:12px;"></i></button>` : ''}
                     <button class="btn" style="padding:4px 8px; font-size:11px; background-color:rgba(239,68,68,0.15); color:var(--red-alert); border:1px solid rgba(239,68,68,0.2)" onclick="deleteCarConfirm(${car.id})" title="Excluir"><i data-lucide="trash-2" style="width:12px;height:12px;"></i></button>
                 </div>
@@ -909,7 +909,7 @@ function renderEstoqueTable(filterStatus = 'todos', searchQuery = '') {
                 ${gridThumbContent}
                 <div class="${badgeClass}">${badgeIcon} ${calcDaysInStock(car.purchaseDate)}d</div>
                 <div class="estoque-card-actions">
-                    <button class="btn btn-secondary" style="padding:4px;" onclick="openEditCarModal(${car.id})" title="Editar"><i data-lucide="pencil" style="width:14px;height:14px;"></i></button>
+                    <button class="btn btn-secondary" style="padding:4px;" onclick="openCarDetails(${car.id})" title="Editar"><i data-lucide="pencil" style="width:14px;height:14px;"></i></button>
                     ${sellBtn}
                 </div>
             </div>
