@@ -3466,7 +3466,7 @@ async function deleteCarDocument(docId, storagePath) {
 // Função para alternar abas dentro da Ficha do Veículo
 function switchCarDetailsTab(tabId) {
     // Esconde todos os painéis
-    document.querySelectorAll('.cd-tab-pane').forEach(pane => {
+    document.querySelectorAll('.mobile-tab-section').forEach(pane => {
         pane.classList.remove('active');
     });
     // Remove classe active dos botões
@@ -3475,10 +3475,9 @@ function switchCarDetailsTab(tabId) {
     });
 
     // Mostra o painel correto
-    const targetPane = document.querySelector(`.cd-tab-pane.tab-${tabId}`);
-    if (targetPane) {
-        targetPane.classList.add('active');
-    }
+    document.querySelectorAll(`.mobile-tab-section.tab-${tabId}`).forEach(pane => {
+        pane.classList.add('active');
+    });
 
     // Ativa o botão correto
     document.querySelectorAll(`.cd-mobile-tab-btn`).forEach(btn => {
